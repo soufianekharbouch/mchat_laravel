@@ -1,0 +1,739 @@
+[13-Jul-2026 00:57:04 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 00:57:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 00:57:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 00:59:05 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 00:59:08 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 00:59:08 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 00:59:37 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 00:59:39 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 00:59:39 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 00:59:42 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 00:59:44 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 00:59:45 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 00:59:51 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 00:59:53 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 00:59:54 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:00:09 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:00:11 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:00:12 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:00:16 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:00:18 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:00:18 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:00:21 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:00:23 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:00:23 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:00:25 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:00:27 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:00:27 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:00:55 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:00:56 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:00:57 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:01:04 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:01:05 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:01:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:01:33 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:01:35 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:01:36 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:02:05 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:02:05 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:02:49 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:02:51 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:02:51 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:02:59 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:03:00 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:03:00 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:03:39 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:03:44 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:16
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 16
+[13-Jul-2026 01:05:28 UTC] PHP Parse error:  syntax error, unexpected token "<", expecting end of file in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 24
+[13-Jul-2026 01:05:30 UTC] PHP Parse error:  syntax error, unexpected token "<", expecting end of file in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 24
+[13-Jul-2026 01:06:22 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:14
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 14
+[13-Jul-2026 01:06:24 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:14
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 14
+[13-Jul-2026 01:06:32 UTC] PHP Parse error:  syntax error, unexpected token "<", expecting end of file in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 21
+[13-Jul-2026 01:06:34 UTC] PHP Parse error:  syntax error, unexpected token "<", expecting end of file in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 21
+[13-Jul-2026 01:06:35 UTC] PHP Parse error:  syntax error, unexpected token "<", expecting end of file in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 21
+[13-Jul-2026 01:07:21 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:14
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 14
+[13-Jul-2026 01:07:22 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:14
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 14
+[13-Jul-2026 01:07:31 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:14
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 14
+[13-Jul-2026 01:07:32 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\Middleware::preventRequestForgery() in /home/f8fecyivbqh6/public_html/bootstrap/app.php:14
+Stack trace:
+#0 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php(281): {closure}()
+#1 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1432): Illuminate\Foundation\Configuration\ApplicationBuilder->Illuminate\Foundation\Configuration\{closure}()
+#2 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1368): Illuminate\Container\Container->fireCallbackArray()
+#3 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(1354): Illuminate\Container\Container->fireAfterResolvingCallbacks()
+#4 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(850): Illuminate\Container\Container->fireResolvingCallbacks()
+#5 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\Container\Container->resolve()
+#6 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\Foundation\Application->resolve()
+#7 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\Container\Container->make()
+#8 /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1218): Illuminate\Foundation\Application->make()
+#9 /home/f8fecyivbqh6/public_html/index.php(17): Illuminate\Foundation\Application->handleRequest()
+#10 {main}
+  thrown in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 14
+[13-Jul-2026 01:09:14 UTC] PHP Parse error:  syntax error, unexpected token "`" in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 24
+[13-Jul-2026 01:09:15 UTC] PHP Parse error:  syntax error, unexpected token "`" in /home/f8fecyivbqh6/public_html/bootstrap/app.php on line 24
+[13-Aug-2026 05:10:23 Asia/Kuwait] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php on line 1915
+[13-Aug-2026 05:10:25 Asia/Kuwait] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in /home/f8fecyivbqh6/public_html/vendor/laravel/framework/src/Illuminate/Collections/Collection.php on line 1828
+[11-Sep-2026 20:28:48 Asia/Kuwait] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in /home2/kharbou1/public_html/animal-care2.kharbouch-soufiane.com/vendor/laravel/framework/src/Illuminate/Hashing/BcryptHasher.php on line 49
+[11-Sep-2026 20:30:05 Asia/Kuwait] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in /home2/kharbou1/public_html/animal-care2.kharbouch-soufiane.com/vendor/laravel/framework/src/Illuminate/Hashing/BcryptHasher.php on line 49
