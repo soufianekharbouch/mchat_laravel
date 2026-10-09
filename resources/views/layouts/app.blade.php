@@ -582,7 +582,7 @@
                                 "
                             ></i>
 
-                            App Communications ---
+                            App Communications
 
                         </a>
 
