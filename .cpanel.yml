@@ -1,0 +1,6 @@
+
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home2/kharbou1/public_html/animal-care2.kharbouch-soufiane.com/
+    - /bin/rsync -a --exclude='.env' --exclude='.git/' --exclude='.cpanel.yml' --exclude='.vscode/' --exclude='vendor/' --exclude='node_modules/' --exclude='storage/' --exclude='bootstrap/cache/' ./ "$DEPLOYPATH"
