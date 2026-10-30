@@ -233,6 +233,84 @@ class User extends Authenticatable
 
             /*
             |--------------------------------------------------------------------------
+            | Products (recipe packs)
+            |--------------------------------------------------------------------------
+            */
+
+            'products' => [
+                'title' => 'Products',
+
+                'description' =>
+                    'View and manage products (recipe packs sold to customers).',
+
+                'permissions' => [
+                    'products.view' =>
+                        'View products',
+
+                    'products.create' =>
+                        'Add products',
+
+                    'products.update' =>
+                        'Edit and activate / deactivate products',
+
+                    'products.delete' =>
+                        'Delete products',
+                ],
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Purchases
+            |--------------------------------------------------------------------------
+            */
+
+            'purchases' => [
+                'title' => 'Purchases',
+
+                'description' =>
+                    'View and manage product purchases (back-office, app, bank transfer, Shopify).',
+
+                'permissions' => [
+                    'purchases.view' =>
+                        'View purchases',
+
+                    'purchases.create' =>
+                        'Add purchases manually',
+
+                    'purchases.update' =>
+                        'Edit purchases (payment, price, dates, notes)',
+
+                    'purchases.update_status' =>
+                        'Change purchase status',
+                ],
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Auto subscription (Shopify orders)
+            |--------------------------------------------------------------------------
+            */
+
+            'auto_subscriptions' => [
+                'title' => 'Auto subscription',
+
+                'description' =>
+                    'Shopify orders imported automatically (customer, pet, purchase, deliveries).',
+
+                'permissions' => [
+                    'auto_subscriptions.view' =>
+                        'View imported Shopify orders',
+
+                    'auto_subscriptions.manage' =>
+                        'Process again, ignore, mark as checked, edit deliveries',
+
+                    'auto_subscriptions.test' =>
+                        'Use the order test page',
+                ],
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
             | Subscriptions
             |--------------------------------------------------------------------------
             */
@@ -246,6 +324,9 @@ class User extends Authenticatable
                 'permissions' => [
                     'subscriptions.view' =>
                         'View subscriptions',
+
+                    'subscriptions.show' =>
+                        'View subscription details page',
 
                     'subscriptions.create' =>
                         'Add subscriptions',
@@ -284,22 +365,53 @@ class User extends Authenticatable
 
             /*
             |--------------------------------------------------------------------------
-            | Loyalty Program
+            | Orders (delivery history + JAAK)
             |--------------------------------------------------------------------------
             */
 
-            'loyalty' => [
-                'title' => 'Loyalty Program',
+            'orders' => [
+                'title' => 'Orders',
 
                 'description' =>
-                    'View and manage customer loyalty points.',
+                    'Deliveries history and JAAK delivery tracking.',
 
                 'permissions' => [
-                    'loyalty.view' =>
-                        'View loyalty program',
+                    'orders.view' =>
+                        'View orders and delivery status',
 
-                    'loyalty.update' =>
-                        'Manage loyalty points',
+                    'orders.send_jaak' =>
+                        'Send / retry orders at JAAK',
+
+                    'orders.request_drivers' =>
+                        'Request JAAK drivers (delivery fees)',
+                ],
+            ],
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Pet Loyalty (points per pet, levels)
+            |--------------------------------------------------------------------------
+            */
+
+            'pet_loyalty' => [
+                'title' => 'Pet Loyalty',
+
+                'description' =>
+                    'Points of each pet, levels and settings of the loyalty program.',
+
+                'permissions' => [
+                    'pet_loyalty.view' =>
+                        'View customers, points and history',
+
+                    'pet_loyalty.adjust' =>
+                        'Add / remove points manually',
+
+                    'pet_loyalty.recalculate' =>
+                        'Recalculate the points of all the pets',
+
+                    'pet_loyalty.settings' =>
+                        'Change the settings, rules and levels',
                 ],
             ],
 

@@ -48,29 +48,59 @@
             >
                 @csrf
 
-                <div class="mb-3">
-                    <label
-                        for="province_name"
-                        class="form-label"
-                    >
-                        Province Name *
-                    </label>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label
+                            for="province_name"
+                            class="form-label"
+                        >
+                            Province Name (English) *
+                        </label>
 
-                    <input
-                        type="text"
-                        id="province_name"
-                        name="name"
-                        class="form-control @error('name') is-invalid @enderror"
-                        value="{{ old('name') }}"
-                        required
-                        autofocus
-                    >
+                        <input
+                            type="text"
+                            id="province_name"
+                            name="name"
+                            class="form-control @error('name') is-invalid @enderror"
+                            placeholder="Province name"
+                            value="{{ old('name') }}"
+                            required
+                            autofocus
+                        >
 
-                    @error('name')
-                        <div class="invalid-feedback">
-                            {{ $message }}
-                        </div>
-                    @enderror
+                        @error('name')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label
+                            for="province_name_ar"
+                            class="form-label"
+                        >
+                            Province Name (Arabic) *
+                        </label>
+
+                        <input
+                            type="text"
+                            id="province_name_ar"
+                            name="name_ar"
+                            dir="rtl"
+                            lang="ar"
+                            class="form-control @error('name_ar') is-invalid @enderror"
+                            placeholder="اسم الإقليم"
+                            value="{{ old('name_ar') }}"
+                            required
+                        >
+
+                        @error('name_ar')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
+                    </div>
                 </div>
 
                 <div class="mb-3">

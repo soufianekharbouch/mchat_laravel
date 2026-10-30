@@ -577,15 +577,7 @@
             'mc-mobile-customer-name'
         );
 
-    const customerPoints =
-        document.getElementById(
-            'mc-customer-points'
-        );
 
-    const mobileCustomerPoints =
-        document.getElementById(
-            'mc-mobile-customer-points'
-        );
 
 
     const sidebar =
@@ -940,11 +932,6 @@
             TEXT.customer;
 
 
-        const points =
-            formatNumber(
-                subscription.valid_loyalty_points ||
-                0
-            );
 
 
         if (customerName) {
@@ -963,29 +950,13 @@
         }
 
 
-        if (customerPoints) {
-
-            customerPoints.textContent =
-                points +
-                ' ' +
-                TEXT.points;
-
-        }
 
 
-        if (mobileCustomerPoints) {
-
-            mobileCustomerPoints.textContent =
-                points +
-                ' ' +
-                TEXT.points;
-
-        }
 
         renderPets(
             subscription.animals || []
         );
-        
+
         renderOrders(
             subscription.orders || []
         );
@@ -1608,7 +1579,7 @@
         showLogin();
 
     }
-    
+
     const petsGrid =
     document.getElementById(
         'mc-pets-grid'
@@ -1618,7 +1589,7 @@ const petsEmpty =
     document.getElementById(
         'mc-pets-empty'
     );
-    
+
     function escapeHtml(value) {
     return String(value ?? '')
         .replaceAll('&', '&amp;')

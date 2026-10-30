@@ -226,6 +226,76 @@
                 </div>
             </div>
 
+            @php
+                /*
+                 * Preparation progress: orders (pets) and customers.
+                 * Prepared = prepared / shipped / delivered.
+                 */
+                $isOrderPrepared = fn ($o) => in_array(strtolower((string) ($o->computed_status ?? $o->status ?? '')), ['prepared', 'shipped', 'delivered'], true);
+
+                $progressProvinces = [];
+                $progressTotalOrders = 0;
+                $progressPreparedOrders = 0;
+                $progressTotalCustomers = 0;
+                $progressPreparedCustomers = 0;
+
+                foreach ($subscriptions as $progressSub) {
+                    $progressProvince = trim((string) ($progressSub->subscriber_province ?? ''));
+                    $progressProvince = $progressProvince !== '' ? $progressProvince : 'Unknown province';
+                    $progressKey = md5($progressProvince);
+
+                    $subOrders = $plannedOrdersBySubscription[$progressSub->id] ?? collect();
+                    $subTotal = $subOrders->count();
+                    $subPrepared = $subOrders->filter($isOrderPrepared)->count();
+                    $subDone = $subTotal > 0 && $subPrepared === $subTotal;
+
+                    $progressProvinces[$progressKey] ??= ['orders' => 0, 'prepared_orders' => 0, 'customers' => 0, 'prepared_customers' => 0];
+                    $progressProvinces[$progressKey]['orders'] += $subTotal;
+                    $progressProvinces[$progressKey]['prepared_orders'] += $subPrepared;
+                    $progressProvinces[$progressKey]['customers']++;
+                    $progressProvinces[$progressKey]['prepared_customers'] += $subDone ? 1 : 0;
+
+                    $progressTotalOrders += $subTotal;
+                    $progressPreparedOrders += $subPrepared;
+                    $progressTotalCustomers++;
+                    $progressPreparedCustomers += $subDone ? 1 : 0;
+                }
+
+                $progressPercent = $progressTotalOrders > 0 ? (int) floor($progressPreparedOrders * 100 / $progressTotalOrders) : 0;
+            @endphp
+
+            {{-- PREPARATION PROGRESS --}}
+            <div class="card mt-2 prep-progress-card"
+                 id="prepProgress"
+                 data-total-orders="{{ $progressTotalOrders }}"
+                 data-prepared-orders="{{ $progressPreparedOrders }}"
+                 data-total-customers="{{ $progressTotalCustomers }}"
+                 data-prepared-customers="{{ $progressPreparedCustomers }}">
+                <div class="card-body p-2">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+                        <span class="fw-semibold small">
+                            <i class="fas fa-tasks me-1 text-mauve"></i>Preparation progress
+                        </span>
+                        <span class="small">
+                            <span class="badge bg-mauve" id="prepProgressOrders">{{ $progressPreparedOrders }} / {{ $progressTotalOrders }} orders</span>
+                            <span class="badge bg-light text-dark border" id="prepProgressCustomers">{{ $progressPreparedCustomers }} / {{ $progressTotalCustomers }} customers</span>
+                            <span class="badge bg-success {{ $progressTotalOrders > 0 && $progressPreparedOrders === $progressTotalOrders ? '' : 'd-none' }}" id="prepProgressDone">
+                                <i class="fas fa-check-circle me-1"></i>All prepared
+                            </span>
+                        </span>
+                    </div>
+
+                    <div class="progress prep-progress" role="progressbar"
+                         aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $progressPercent }}">
+                        <div class="progress-bar {{ $progressPercent === 100 ? 'bg-success' : 'bg-mauve' }} progress-bar-striped {{ $progressPercent < 100 ? 'progress-bar-animated' : '' }}"
+                             id="prepProgressBar"
+                             style="width: {{ $progressPercent }}%">
+                            {{ $progressPercent }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="card bg-light mt-2">
                 <div class="card-header bg-yellow text-dark py-1">
                     <h6 class="mb-0">
@@ -257,11 +327,19 @@
                                     $headingId = 'heading_' . md5($provName);
 
                                     $subsInProvince = $subsInProvince->values();
+
+                                    $provinceKey = md5($provName);
+                                    $provinceProgress = $progressProvinces[$provinceKey] ?? ['orders' => 0, 'prepared_orders' => 0, 'customers' => 0, 'prepared_customers' => 0];
+                                    $provinceDone = $provinceProgress['customers'] > 0
+                                        && $provinceProgress['prepared_customers'] === $provinceProgress['customers'];
                                 @endphp
 
                                 <div class="accordion-item mb-2">
                                     <h2 class="accordion-header" id="{{ $headingId }}">
-                                        <button class="accordion-button collapsed py-2" type="button"
+                                        <button class="accordion-button collapsed py-2 {{ $provinceDone ? 'province-done' : '' }}" type="button"
+                                                id="provHeading_{{ $provinceKey }}"
+                                                data-customers="{{ $provinceProgress['customers'] }}"
+                                                data-prepared-customers="{{ $provinceProgress['prepared_customers'] }}"
                                                 data-bs-toggle="collapse"
                                                 data-bs-target="#{{ $collapseId }}"
                                                 aria-expanded="false"
@@ -271,8 +349,14 @@
                                                     <i class="fas fa-map-marked-alt me-1"></i>
                                                     {{ $provName }}
                                                 </span>
-                                                <span class="badge bg-mauve ms-2">
-                                                    {{ $subsInProvince->count() }}
+                                                <span class="d-flex align-items-center gap-1 ms-2 me-2">
+                                                    <span class="province-done-pill {{ $provinceDone ? '' : 'd-none' }}" id="provDone_{{ $provinceKey }}">
+                                                        <i class="fas fa-check-circle me-1"></i>All prepared
+                                                    </span>
+                                                    <span class="badge {{ $provinceDone ? 'bg-success' : 'bg-mauve' }}" id="provCount_{{ $provinceKey }}"
+                                                          title="Customers prepared / customers">
+                                                        {{ $provinceProgress['prepared_customers'] }} / {{ $provinceProgress['customers'] }}
+                                                    </span>
                                                 </span>
                                             </div>
                                         </button>
@@ -400,6 +484,7 @@
                                                                 role="button"
                                                                 tabindex="0"
                                                                 data-subscription-id="{{ $subscription->id }}"
+                                                                data-province-key="{{ $provinceKey }}"
                                                                 data-delivery-details='@json($details, JSON_UNESCAPED_UNICODE)'
                                                                 data-delivery-date="{{ $date }}">
                                                                 <td class="small">
@@ -580,6 +665,70 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (check) check.classList.toggle('d-none', !allPrepared);
     if (row) row.classList.toggle('delivery-prepared-row', !!allPrepared);
+  }
+
+  /*
+   * Progress bar + province headings, updated live after "Mark as prepared".
+   */
+  function updateProgress(orderBecamePrepared, customerBecamePrepared, provinceKey) {
+    const card = document.getElementById('prepProgress');
+
+    if (card) {
+      const totalOrders = parseInt(card.dataset.totalOrders || '0', 10);
+      const totalCustomers = parseInt(card.dataset.totalCustomers || '0', 10);
+      let preparedOrders = parseInt(card.dataset.preparedOrders || '0', 10) + (orderBecamePrepared ? 1 : 0);
+      let preparedCustomers = parseInt(card.dataset.preparedCustomers || '0', 10) + (customerBecamePrepared ? 1 : 0);
+
+      preparedOrders = Math.min(preparedOrders, totalOrders);
+      preparedCustomers = Math.min(preparedCustomers, totalCustomers);
+
+      card.dataset.preparedOrders = preparedOrders;
+      card.dataset.preparedCustomers = preparedCustomers;
+
+      const percent = totalOrders > 0 ? Math.floor(preparedOrders * 100 / totalOrders) : 0;
+      const bar = document.getElementById('prepProgressBar');
+
+      if (bar) {
+        bar.style.width = percent + '%';
+        bar.textContent = percent + '%';
+        bar.classList.toggle('bg-success', percent === 100);
+        bar.classList.toggle('bg-mauve', percent < 100);
+        bar.classList.toggle('progress-bar-animated', percent < 100);
+        bar.parentElement.setAttribute('aria-valuenow', percent);
+      }
+
+      const ordersEl = document.getElementById('prepProgressOrders');
+      if (ordersEl) ordersEl.textContent = preparedOrders + ' / ' + totalOrders + ' orders';
+
+      const customersEl = document.getElementById('prepProgressCustomers');
+      if (customersEl) customersEl.textContent = preparedCustomers + ' / ' + totalCustomers + ' customers';
+
+      const doneEl = document.getElementById('prepProgressDone');
+      if (doneEl) doneEl.classList.toggle('d-none', !(totalOrders > 0 && preparedOrders === totalOrders));
+    }
+
+    if (customerBecamePrepared && provinceKey) {
+      const heading = document.getElementById('provHeading_' + provinceKey);
+
+      if (heading) {
+        const customers = parseInt(heading.dataset.customers || '0', 10);
+        const prepared = Math.min(customers, parseInt(heading.dataset.preparedCustomers || '0', 10) + 1);
+        const done = customers > 0 && prepared === customers;
+
+        heading.dataset.preparedCustomers = prepared;
+        heading.classList.toggle('province-done', done);
+
+        const count = document.getElementById('provCount_' + provinceKey);
+        if (count) {
+          count.textContent = prepared + ' / ' + customers;
+          count.classList.toggle('bg-success', done);
+          count.classList.toggle('bg-mauve', !done);
+        }
+
+        const pill = document.getElementById('provDone_' + provinceKey);
+        if (pill) pill.classList.toggle('d-none', !done);
+      }
+    }
   }
 
   function computeAllPrepared(orders) {
@@ -835,6 +984,11 @@ document.addEventListener('DOMContentLoaded', function () {
         let data = {};
         try { data = JSON.parse(raw); } catch(e) { data = {}; }
 
+        const wasAllPrepared = computeAllPrepared(data.orders || []);
+        const wasOrderPrepared = (data.orders || []).some(function(o){
+          return String(o.order_id ?? '') === String(orderId) && isPreparedStatus(o.status);
+        });
+
         if (Array.isArray(data.orders)) {
           data.orders = data.orders.map(function(o){
             if (String(o.order_id ?? '') === String(orderId)) {
@@ -845,7 +999,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         modalOpenRow.setAttribute('data-delivery-details', JSON.stringify(data));
-        updateSubscriberPreparedUI(subId, computeAllPrepared(data.orders || []));
+
+        const isAllPrepared = computeAllPrepared(data.orders || []);
+        updateSubscriberPreparedUI(subId, isAllPrepared);
+        updateProgress(!wasOrderPrepared, !wasAllPrepared && isAllPrepared, modalOpenRow.getAttribute('data-province-key'));
       }
 
     } catch (err) {
@@ -864,6 +1021,25 @@ document.addEventListener('DOMContentLoaded', function () {
 .delivery-clickable:focus { outline: 2px solid #8B5FBF; outline-offset: -2px; }
 
 .delivery-prepared-row { background: rgba(34,197,94,0.06) !important; }
+
+.prep-progress-card { border: 1px solid rgba(139,95,191,0.25); }
+.prep-progress { height: 18px; border-radius: 999px; background: #f3e8ff; }
+.prep-progress .progress-bar { font-size: .72rem; font-weight: 800; transition: width .4s ease; }
+
+.accordion-button.province-done { background: rgba(34,197,94,0.10); color: #166534; }
+.accordion-button.province-done:not(.collapsed) { background: rgba(34,197,94,0.16); }
+.province-done-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 800;
+  background: rgba(34,197,94,0.15);
+  color: #166534;
+  border: 1px solid rgba(34,197,94,0.35);
+  white-space: nowrap;
+}
 
 .prep-status-pill {
   display: inline-flex;

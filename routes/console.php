@@ -1,4 +1,3 @@
-
 <?php
 
 use Illuminate\Foundation\Inspiring;
@@ -29,3 +28,43 @@ Artisan::command('inspire', function () {
 Schedule::command('support:send-unread-notifications')
     ->everyMinute()
     ->withoutOverlapping();
+
+/*
+|--------------------------------------------------------------------------
+| JAAK deliveries
+|--------------------------------------------------------------------------
+|
+| JAAK has no webhook: every 10 minutes, and only when prepared orders are
+| at JAAK (or waiting to be sent), the statuses are read (Shipped /
+| Delivered applied automatically) and the failed sends are retried.
+| Needs the cPanel cron: * * * * * php /path/artisan schedule:run
+|
+*/
+
+Schedule::command('jaak:sync')
+    ->everyTenMinutes()
+    ->withoutOverlapping()
+    // Only when deliveries are waiting at JAAK or must be sent again
+    ->when(fn () => \App\Services\JaakClient::enabled()
+        && \App\Models\JaakDelivery::query()
+            ->where(fn ($q) => $q->whereNotNull('jaak_task_id')->whereIn('status', \App\Models\JaakDelivery::OPEN_STATUSES))
+            ->orWhere(fn ($q) => $q->whereNull('jaak_task_id')->whereIn('status', ['queued', 'waiting']))
+            ->exists());
+
+/*
+|--------------------------------------------------------------------------
+| Shopify orders not received by webhook
+|--------------------------------------------------------------------------
+|
+| Same as the "Refresh" button of Auto subscription, every 10 minutes:
+| Shopify orders of the last days (never before SHOPIFY_SYNC_START)
+| missing here are imported, paid "Waiting payment" ones processed again.
+| Only when the Shopify Admin token is set.
+|
+*/
+
+Schedule::command('shopify:sync-orders')
+    ->everyTenMinutes()
+    ->withoutOverlapping()
+    ->when(fn () => filled(config('services.shopify.store_domain'))
+        && filled(config('services.shopify.admin_access_token')));

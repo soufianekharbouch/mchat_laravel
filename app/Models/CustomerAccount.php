@@ -90,17 +90,13 @@ class CustomerAccount extends Authenticatable
 
     public function hasValidAccessToken(): bool
     {
-        return !empty(
-            $this->access_token_hash
-        )
-            &&
-            !empty(
-                $this->access_token_expires_at
-            )
-            &&
-            $this
-                ->access_token_expires_at
-                ->isFuture();
+        if (empty($this->access_token_hash)) {
+            return false;
+        }
+
+        // NULL = session without limit (WhatsApp sign in), until logout
+        return empty($this->access_token_expires_at)
+            || $this->access_token_expires_at->isFuture();
     }
 
     /*
@@ -178,7 +174,7 @@ class CustomerAccount extends Authenticatable
             'customer_account_id'
         );
     }
-    
+
     public function supportTickets(): HasMany
     {
         return $this->hasMany(

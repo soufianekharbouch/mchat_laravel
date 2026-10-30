@@ -9,11 +9,6 @@
             'icon' => 'fa-solid fa-paw',
         ],
 
-        'loyalty-points' => [
-            'title' => __('dashboard.loyalty_points'),
-            'icon' => 'fa-solid fa-gift',
-        ],
-
         'orders' => [
             'title' => __('dashboard.orders'),
             'icon' => 'fa-solid fa-box',
@@ -58,10 +53,6 @@
                     <strong id="mc-customer-name">
                         {{ __('dashboard.customer') }}
                     </strong>
-
-                    <span id="mc-customer-points">
-                        0 {{ __('dashboard.points') }}
-                    </span>
 
                 </div>
 
@@ -129,10 +120,6 @@
                         {{ __('dashboard.customer') }}
                     </strong>
 
-                    <span id="mc-mobile-customer-points">
-                        0 {{ __('dashboard.points') }}
-                    </span>
-
                 </div>
 
             </header>
@@ -147,14 +134,6 @@
                     @include('customer_dashboard.pages.pets')
                 </div>
 
-                <div
-                    id="mc-page-loyalty-points"
-                    class="mc-dashboard-page"
-                    data-dashboard-content="loyalty-points"
-                    hidden
-                >
-                    @include('customer_dashboard.pages.loyalty-points')
-                </div>
 
                 <div
                     id="mc-page-orders"

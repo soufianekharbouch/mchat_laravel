@@ -81,8 +81,6 @@ class CustomerDashboardController extends Controller
                         'animals.plannedOrders.items.recipe',
                         'plannedOrders.animal',
                         'plannedOrders.items.recipe',
-                        'customerServiceReports',
-                        'loyaltyPointTransactions',
                     ])
                     ->first();
 
@@ -404,12 +402,6 @@ class CustomerDashboardController extends Controller
                         $subscription
                             ->subscriber_last_name,
 
-                    'valid_loyalty_points' =>
-                        (int) (
-                            $subscription
-                                ->valid_loyalty_points
-                            ?? 0
-                        ),
 
                     /*
                     |--------------------------------------------------------------------------

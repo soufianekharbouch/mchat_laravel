@@ -10,7 +10,7 @@ use Illuminate\Validation\Rule;
 class ProvinceController extends Controller
 {
     /**
-     * Vérifie que l'utilisateur connecté possède la permission demandée.
+     * Check user permissions.
      */
     private function ensurePermission(string $permission): void
     {
@@ -23,13 +23,17 @@ class ProvinceController extends Controller
     }
 
     /**
-     * Afficher la liste des provinces et des zones.
+     * List provinces and zones.
      */
     public function index()
     {
         $this->ensurePermission('zones.view');
 
-        $provinces = Province::with('zones')
+        $provinces = Province::with([
+            'zones' => function ($query) {
+                $query->orderBy('name');
+            }
+        ])
             ->orderBy('name')
             ->get();
 
@@ -40,7 +44,7 @@ class ProvinceController extends Controller
     }
 
     /**
-     * Afficher le formulaire de création d'une province.
+     * Show province creation form.
      */
     public function create()
     {
@@ -50,7 +54,7 @@ class ProvinceController extends Controller
     }
 
     /**
-     * Enregistrer une nouvelle province.
+     * Store new province.
      */
     public function store(Request $request)
     {
@@ -61,13 +65,18 @@ class ProvinceController extends Controller
                 'required',
                 'string',
                 'max:255',
-                'unique:provinces,name',
+                Rule::unique('provinces', 'name'),
+            ],
+            'name_en' => [
+                'required',
+                'string',
+                'max:255',
             ],
             'code' => [
                 'required',
                 'string',
                 'max:50',
-                'unique:provinces,code',
+                Rule::unique('provinces', 'code'),
             ],
         ]);
 
@@ -82,13 +91,17 @@ class ProvinceController extends Controller
     }
 
     /**
-     * Afficher le formulaire de modification d'une province.
+     * Show province edit form.
      */
     public function edit(Province $province)
     {
         $this->ensurePermission('zones.update');
 
-        $province->load('zones');
+        $province->load([
+            'zones' => function ($query) {
+                $query->orderBy('name');
+            }
+        ]);
 
         return view(
             'provinces_zones.edit',
@@ -97,7 +110,7 @@ class ProvinceController extends Controller
     }
 
     /**
-     * Modifier une province.
+     * Update province.
      */
     public function update(
         Request $request,
@@ -112,6 +125,11 @@ class ProvinceController extends Controller
                 'max:255',
                 Rule::unique('provinces', 'name')
                     ->ignore($province->id),
+            ],
+            'name_en' => [
+                'required',
+                'string',
+                'max:255',
             ],
             'code' => [
                 'required',
@@ -133,15 +151,12 @@ class ProvinceController extends Controller
     }
 
     /**
-     * Supprimer une province.
+     * Delete province.
      */
     public function destroy(Province $province)
     {
         $this->ensurePermission('zones.delete');
 
-        /*
-         * Empêche la suppression si la province contient encore des zones.
-         */
         if ($province->zones()->exists()) {
             return redirect()
                 ->route('provinces-zones.index')
@@ -162,30 +177,26 @@ class ProvinceController extends Controller
     }
 
     /**
-     * Ajouter une zone à une province.
+     * Add zone to province.
      */
     public function storeZone(
         Request $request,
         Province $province
     ) {
-        $this->ensurePermission('zones.create');
+        $this->ensurePermission('zones.add');
 
         $data = $request->validate([
             'name' => [
                 'required',
                 'string',
                 'max:255',
-
-                /*
-                 * Empêche les doublons de zones dans la même province.
-                 */
                 Rule::unique('zones', 'name')
-                    ->where(function ($query) use ($province) {
-                        return $query->where(
-                            'province_id',
-                            $province->id
-                        );
-                    }),
+                    ->where('province_id', $province->id),
+            ],
+            'name_en' => [
+                'required',
+                'string',
+                'max:255',
             ],
         ]);
 
@@ -198,20 +209,57 @@ class ProvinceController extends Controller
     }
 
     /**
-     * Supprimer une zone d'une province.
+     * Update existing zone.
+     */
+    public function updateZone(
+        Request $request,
+        Province $province,
+        Zone $zone
+    ) {
+        $this->ensurePermission('zones.update');
+
+        abort_unless(
+            (int) $zone->province_id === (int) $province->id,
+            404
+        );
+
+        $data = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('zones', 'name')
+                    ->where('province_id', $province->id)
+                    ->ignore($zone->id),
+            ],
+            'name_en' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+        ]);
+
+        $zone->update($data);
+
+        return back()->with(
+            'success',
+            'Zone updated successfully.'
+        );
+    }
+
+    /**
+     * Delete zone from province.
      */
     public function destroyZone(
         Province $province,
         Zone $zone
     ) {
-        $this->ensurePermission('zones.delete');
+        $this->ensurePermission('zones.remove');
 
-        /*
-         * Vérifie que la zone appartient réellement à la province.
-         */
-        if ((int) $zone->province_id !== (int) $province->id) {
-            abort(404);
-        }
+        abort_unless(
+            (int) $zone->province_id === (int) $province->id,
+            404
+        );
 
         $zone->delete();
 

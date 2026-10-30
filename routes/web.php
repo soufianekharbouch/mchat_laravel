@@ -5,16 +5,22 @@ use App\Http\Controllers\AppCommunicationCustomerActivityController;
 use App\Http\Controllers\AppCommunicationCustomerController;
 use App\Http\Controllers\AppNotificationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AutoSubscriptionController;
+use App\Http\Controllers\OrdersController;
+use App\Http\Controllers\SubscriptionDetailsController;
+use App\Http\Controllers\ShopifyOrderTestController;
 use App\Http\Controllers\CustomerAuthController;
 use App\Http\Controllers\CustomerDashboardController;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\DailyReportPdfController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IngredientController;
-use App\Http\Controllers\LoyaltyProgramController;
-use App\Http\Controllers\MobileNotificationController;
+use App\Http\Controllers\PdfNewDeliveryController;
+use App\Http\Controllers\PetLoyaltyController;
 use App\Http\Controllers\PremiumRecipesController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProvinceController;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\RecipeController;
 use App\Http\Controllers\RecipeTypeController;
 use App\Http\Controllers\SettingsController;
@@ -29,6 +35,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Initialisation des comptes clients
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/admin/initialize-all-customer-accounts', function () {
 
     $createdAccounts = 0;
@@ -36,25 +48,17 @@ Route::get('/admin/initialize-all-customer-accounts', function () {
     $alreadyInitialized = 0;
     $skipped = [];
 
-    $subscriptions = Subscription::with('customerAccount')
-        ->get();
+    $subscriptions = Subscription::with('customerAccount')->get();
 
     foreach ($subscriptions as $subscription) {
 
         /*
-        |--------------------------------------------------------------------------
         | Normalize phone
-        |--------------------------------------------------------------------------
         */
 
-        $phone = preg_replace(
-            '/[^0-9]/',
-            '',
-            (string) $subscription->subscriber_phone
-        );
+        $phone = preg_replace('/[^0-9]/', '', (string) $subscription->subscriber_phone);
 
         if (!$phone) {
-
             $skipped[] = [
                 'subscription_id' => $subscription->id,
                 'reason' => 'No phone number',
@@ -63,200 +67,91 @@ Route::get('/admin/initialize-all-customer-accounts', function () {
             continue;
         }
 
-
         /*
-        |--------------------------------------------------------------------------
         | CASE 1 : NO CUSTOMER ACCOUNT YET
-        |--------------------------------------------------------------------------
         */
 
         if (!$subscription->customerAccount) {
 
-            /*
-             * Avoid using a phone already attached
-             * to another customer account.
-             */
-
-            $existingPhone =
-                CustomerAccount::query()
-                    ->where(
-                        'phone',
-                        $phone
-                    )
-                    ->first();
+            // Avoid using a phone already attached to another customer account.
+            $existingPhone = CustomerAccount::query()
+                ->where('phone', $phone)
+                ->first();
 
             if ($existingPhone) {
-
                 $skipped[] = [
-                    'subscription_id' =>
-                        $subscription->id,
-
-                    'phone' =>
-                        $phone,
-
-                    'reason' =>
-                        'Phone already linked to customer account #'
-                        . $existingPhone->id,
+                    'subscription_id' => $subscription->id,
+                    'phone' => $phone,
+                    'reason' => 'Phone already linked to customer account #' . $existingPhone->id,
                 ];
 
                 continue;
             }
 
+            // Generate 6-digit password.
+            $initialPassword = (string) random_int(100000, 999999);
 
-            /*
-             * Generate 6-digit password.
-             */
-
-            $initialPassword =
-                (string) random_int(
-                    100000,
-                    999999
-                );
-
-
-            /*
-             * CustomerAccount has:
-             *
-             * 'password' => 'hashed'
-             *
-             * so Laravel hashes it automatically.
-             */
-
+            // CustomerAccount has 'password' => 'hashed', so Laravel hashes it automatically.
             CustomerAccount::create([
-                'subscription_id' =>
-                    $subscription->id,
-
-                'phone' =>
-                    $phone,
-
-                'password' =>
-                    $initialPassword,
-
-                'initial_password_encrypted' =>
-                    Crypt::encryptString(
-                        $initialPassword
-                    ),
-
-                'password_changed_at' =>
-                    null,
-
-                'access_token_hash' =>
-                    null,
-
-                'access_token_expires_at' =>
-                    null,
+                'subscription_id' => $subscription->id,
+                'phone' => $phone,
+                'password' => $initialPassword,
+                'initial_password_encrypted' => Crypt::encryptString($initialPassword),
+                'password_changed_at' => null,
+                'access_token_hash' => null,
+                'access_token_expires_at' => null,
             ]);
-
 
             $createdAccounts++;
 
             continue;
         }
 
-
         /*
-        |--------------------------------------------------------------------------
         | CASE 2 : ACCOUNT EXISTS BUT WAS NEVER INITIALIZED
-        |--------------------------------------------------------------------------
         */
 
-        $account =
-            $subscription->customerAccount;
-
+        $account = $subscription->customerAccount;
 
         if (
-            empty(
-                $account->initial_password_encrypted
-            )
-            &&
-            empty(
-                $account->password_changed_at
-            )
+            empty($account->initial_password_encrypted)
+            && empty($account->password_changed_at)
         ) {
+            $initialPassword = (string) random_int(100000, 999999);
 
-            $initialPassword =
-                (string) random_int(
-                    100000,
-                    999999
-                );
+            $account->password = $initialPassword;
+            $account->initial_password_encrypted = Crypt::encryptString($initialPassword);
+            $account->password_changed_at = null;
 
+            // Disconnect previous sessions because the password has just been reset.
+            $account->access_token_hash = null;
+            $account->access_token_expires_at = null;
 
-            $account->password =
-                $initialPassword;
-
-
-            $account->initial_password_encrypted =
-                Crypt::encryptString(
-                    $initialPassword
-                );
-
-
-            $account->password_changed_at =
-                null;
-
-
-            /*
-             * Disconnect previous sessions because
-             * the password has just been reset.
-             */
-
-            $account->access_token_hash =
-                null;
-
-            $account->access_token_expires_at =
-                null;
-
-
-            /*
-             * Synchronize phone.
-             */
-
-            $account->phone =
-                $phone;
-
+            // Synchronize phone.
+            $account->phone = $phone;
 
             $account->save();
-
 
             $initializedExistingAccounts++;
 
             continue;
         }
 
-
         /*
-        |--------------------------------------------------------------------------
         | ALREADY INITIALIZED
-        |--------------------------------------------------------------------------
         */
 
         $alreadyInitialized++;
     }
 
-
     return response()->json([
-        'success' =>
-            true,
-
-        'total_subscriptions' =>
-            $subscriptions->count(),
-
-        'created_accounts' =>
-            $createdAccounts,
-
-        'initialized_existing_accounts' =>
-            $initializedExistingAccounts,
-
-        'already_initialized' =>
-            $alreadyInitialized,
-
-        'skipped_count' =>
-            count(
-                $skipped
-            ),
-
-        'skipped' =>
-            $skipped,
+        'success' => true,
+        'total_subscriptions' => $subscriptions->count(),
+        'created_accounts' => $createdAccounts,
+        'initialized_existing_accounts' => $initializedExistingAccounts,
+        'already_initialized' => $alreadyInitialized,
+        'skipped_count' => count($skipped),
+        'skipped' => $skipped,
     ]);
 });
 
@@ -274,9 +169,7 @@ Route::get('/', function (Request $request) {
         $request->filled('timestamp');
 
     if ($isShopifyProxy) {
-        return app(
-            CustomerDashboardController::class
-        )->index($request);
+        return app(CustomerDashboardController::class)->index($request);
     }
 
     if (Auth::check()) {
@@ -286,8 +179,6 @@ Route::get('/', function (Request $request) {
     return redirect()->route('login');
 
 })->name('home');
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -300,23 +191,15 @@ Route::get('/', function (Request $request) {
 |
 */
 
-Route::post(
-    '/customer-login',
-    [CustomerAuthController::class, 'login']
-)
+Route::post('/customer-login', [CustomerAuthController::class, 'login'])
     ->middleware('throttle:customer-login')
     ->name('customer.login.proxy');
 
-Route::post(
-    '/customer-data',
-    [CustomerDashboardController::class, 'data']
-)->name('customer.data.proxy');
+Route::post('/customer-data', [CustomerDashboardController::class, 'data'])
+    ->name('customer.data.proxy');
 
-Route::post(
-    '/customer-logout',
-    [CustomerAuthController::class, 'logout']
-)->name('customer.logout.proxy');
-
+Route::post('/customer-logout', [CustomerAuthController::class, 'logout'])
+    ->name('customer.logout.proxy');
 
 /*
 |--------------------------------------------------------------------------
@@ -340,7 +223,6 @@ Route::get('/storage-link', function () {
     return 'Échec de création du lien.';
 });
 
-
 /*
 |--------------------------------------------------------------------------
 | Authentification du back-office
@@ -358,23 +240,17 @@ Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
 
-
 /*
 |--------------------------------------------------------------------------
 | PDF accessibles sans authentification administrateur
 |--------------------------------------------------------------------------
 */
 
-Route::get(
-    '/daily-report/delivery-pdf/{subscription}',
-    [DailyReportPdfController::class, 'deliveryPdf']
-)->name('daily-report.delivery-pdf');
+Route::get('/daily-report/delivery-pdf/{subscription}', [DailyReportPdfController::class, 'deliveryPdf'])
+    ->name('daily-report.delivery-pdf');
 
-Route::get(
-    '/daily-report/premium-pdf/{subscription}',
-    [DailyReportPdfController::class, 'premiumPdf']
-)->name('daily-report.premium-pdf');
-
+Route::get('/daily-report/premium-pdf/{subscription}', [DailyReportPdfController::class, 'premiumPdf'])
+    ->name('daily-report.premium-pdf');
 
 /*
 |--------------------------------------------------------------------------
@@ -383,297 +259,335 @@ Route::get(
 */
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/support-tickets/{ticket}/messages', [SupportTicketController::class, 'messages'])
-    ->name('support-tickets.messages');
+
+    /*
+    |--------------------------------------------------------------------------
+    | DASHBOARD, UTILISATEURS, ABONNEMENTS
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
     Route::resource('users', UserController::class);
 
-    Route::resource('subscriptions', SubscriptionController::class);
+    Route::resource('subscriptions', SubscriptionController::class)
+        ->except(['show']);
 
-    Route::get(
-        '/admin/ingredients',
-        [IngredientController::class, 'index']
-    )->name('admin.ingredients.index');
+    // Subscription details (read only)
+    Route::get('/subscriptions/{subscription}', [SubscriptionDetailsController::class, 'show'])
+        ->whereNumber('subscription')
+        ->name('subscriptions.show');
 
-    Route::get(
-        '/admin/recipes',
-        [RecipeController::class, 'index']
-    )->name('admin.recipes.index');
+    Route::post('/subscriptions/{subscription}/customer-account/reset', [SubscriptionController::class, 'resetCustomerAccount'])
+        ->name('subscriptions.customer-account.reset');
+
+    /*
+    |--------------------------------------------------------------------------
+    | PRODUITS (packs de recettes)
+    |--------------------------------------------------------------------------
+    |
+    | products.index / create / store / edit / update / destroy
+    | + products.toggle-active (activer / désactiver depuis la liste)
+    |
+    */
+
+    Route::resource('products', ProductController::class)
+        ->except(['show']);
+
+    Route::patch('/products/{product}/toggle-active', [ProductController::class, 'toggleActive'])
+        ->name('products.toggle-active');
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACHATS (purchases)
+    |--------------------------------------------------------------------------
+    |
+    | Pas de suppression : un achat est annulé ou remboursé (historique).
+    |
+    */
+
+    Route::resource('purchases', PurchaseController::class)
+        ->except(['destroy']);
+
+    Route::post('/purchases/{purchase}/status', [PurchaseController::class, 'updateStatus'])
+        ->name('purchases.status');
+
+    // PREMIUM-... pack: assign the custom product of the customer
+    Route::post('/purchases/{purchase}/premium-product', [\App\Http\Controllers\PurchasePremiumController::class, 'assignProduct'])
+        ->name('purchases.premium-product');
+
+    /*
+    |--------------------------------------------------------------------------
+    | PET LOYALTY PROGRAM (points per pet)
+    |--------------------------------------------------------------------------
+    |
+    | Permissions: pet_loyalty.view / .adjust / .recalculate / .settings
+    |
+    */
+
+    Route::get('/pet-loyalty', [PetLoyaltyController::class, 'index'])
+        ->name('pet-loyalty.index');
+
+    Route::get('/pet-loyalty/customers/{subscription}', [PetLoyaltyController::class, 'show'])
+        ->whereNumber('subscription')
+        ->name('pet-loyalty.show');
+
+    Route::post('/pet-loyalty/settings', [PetLoyaltyController::class, 'updateSettings'])
+        ->name('pet-loyalty.settings');
+
+    Route::post('/pet-loyalty/recalculate', [PetLoyaltyController::class, 'recalculate'])
+        ->name('pet-loyalty.recalculate');
+
+    Route::post('/pet-loyalty/pets/{animal}/adjust', [PetLoyaltyController::class, 'adjust'])
+        ->whereNumber('animal')
+        ->name('pet-loyalty.adjust');
+
+    Route::delete('/pet-loyalty/transactions/{transaction}', [PetLoyaltyController::class, 'destroyAdjustment'])
+        ->whereNumber('transaction')
+        ->name('pet-loyalty.adjust.destroy');
+
+    /*
+    |--------------------------------------------------------------------------
+    | AUTO SUBSCRIPTION (Shopify orders imported by webhook)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/auto-subscriptions', [AutoSubscriptionController::class, 'index'])
+        ->name('auto-subscriptions.index');
+
+    // "Refresh": Shopify orders whose webhook was not received
+    Route::post('/auto-subscriptions-sync', [AutoSubscriptionController::class, 'sync'])
+        ->name('auto-subscriptions.sync');
+
+    // TEMPORARY test page (remove these 2 routes after the tests)
+    Route::get('/auto-subscriptions-test', [ShopifyOrderTestController::class, 'form'])
+        ->name('auto-subscriptions.test');
+
+    Route::post('/auto-subscriptions-test', [ShopifyOrderTestController::class, 'run'])
+        ->name('auto-subscriptions.test.run');
+
+    Route::get('/auto-subscriptions/{shopifyOrder}', [AutoSubscriptionController::class, 'show'])
+        ->name('auto-subscriptions.show');
+
+    Route::post('/auto-subscriptions/{shopifyOrder}/reprocess', [AutoSubscriptionController::class, 'reprocess'])
+        ->name('auto-subscriptions.reprocess');
+
+    Route::post('/auto-subscriptions/{shopifyOrder}/review', [AutoSubscriptionController::class, 'review'])
+        ->name('auto-subscriptions.review');
+
+    Route::post('/auto-subscriptions/{shopifyOrder}/ignore', [AutoSubscriptionController::class, 'ignore'])
+        ->name('auto-subscriptions.ignore');
+
+    Route::post('/auto-subscriptions/{shopifyOrder}/purchases/{purchase}/replan', [AutoSubscriptionController::class, 'replan'])
+        ->name('auto-subscriptions.replan');
+
+    Route::post('/auto-subscriptions/{shopifyOrder}/purchases/{purchase}/deliveries', [AutoSubscriptionController::class, 'saveDeliveries'])
+        ->name('auto-subscriptions.deliveries');
+
+    // Staff corrections before validating: customer, pets, pack -> other pet
+    Route::post('/auto-subscriptions/{shopifyOrder}/customer', [AutoSubscriptionController::class, 'updateCustomer'])
+        ->name('auto-subscriptions.customer');
+
+    Route::post('/auto-subscriptions/{shopifyOrder}/pets', [AutoSubscriptionController::class, 'storePet'])
+        ->name('auto-subscriptions.pets.store');
+
+    Route::post('/auto-subscriptions/{shopifyOrder}/pets/{animal}', [AutoSubscriptionController::class, 'updatePet'])
+        ->whereNumber('animal')
+        ->name('auto-subscriptions.pets.update');
+
+    Route::post('/auto-subscriptions/{shopifyOrder}/pets/{animal}/delete', [AutoSubscriptionController::class, 'destroyPet'])
+        ->whereNumber('animal')
+        ->name('auto-subscriptions.pets.destroy');
+
+    Route::post('/auto-subscriptions/{shopifyOrder}/purchases/{purchase}/pet', [AutoSubscriptionController::class, 'assignPet'])
+        ->name('auto-subscriptions.pet');
+
+    /*
+    |--------------------------------------------------------------------------
+    | INGRÉDIENTS & RECETTES
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/admin/ingredients', [IngredientController::class, 'index'])
+        ->name('admin.ingredients.index');
+
+    Route::get('/admin/recipes', [RecipeController::class, 'index'])
+        ->name('admin.recipes.index');
 
     Route::resource('ingredients', IngredientController::class);
 
     Route::resource('recipes', RecipeController::class);
 
-    Route::get(
-        '/daily-report',
-        [DailyReportController::class, 'index']
-    )->name('daily-report.index');
-
-    Route::post(
-        '/daily-report/planned-orders/{plannedOrder}/mark-prepared',
-        [DailyReportController::class, 'markPrepared']
-    )->name('daily-report.planned-orders.mark-prepared');
-
     Route::resource('recipe-types', RecipeTypeController::class)
         ->except(['show']);
 
-    Route::resource('provinces', ProvinceController::class);
+    /*
+    |--------------------------------------------------------------------------
+    | PROVINCES & ZONES (libellés : name = anglais, name_ar = arabe)
+    |--------------------------------------------------------------------------
+    |
+    | - Ressource "provinces" conservée pour les anciens noms de routes
+    |   (provinces.index, provinces.edit, ...) sans la route "show"
+    |   qui n'existe pas dans le contrôleur.
+    | - Les anciennes routes vers addZone / deleteZone (méthodes inexistantes)
+    |   sont supprimées ou redirigées vers storeZone.
+    | - Ajout de la route de modification d'une zone (updateZone).
+    |
+    */
 
-    Route::post(
-        'provinces/{province}/zones',
-        [ProvinceController::class, 'addZone']
-    )->name('provinces.zones.store');
+    Route::resource('provinces', ProvinceController::class)
+        ->except(['show']);
 
-    Route::delete(
-        'zones/{zone}',
-        [ProvinceController::class, 'deleteZone']
-    )->name('zones.destroy');
+    // Ancien nom de route conservé, pointe désormais vers la bonne méthode.
+    Route::post('/provinces/{province}/zones', [ProvinceController::class, 'storeZone'])
+        ->name('provinces.zones.store');
 
-    Route::get(
-        '/provinces-zones',
-        [ProvinceController::class, 'index']
-    )->name('provinces-zones.index');
+    Route::get('/provinces-zones', [ProvinceController::class, 'index'])
+        ->name('provinces-zones.index');
 
-    Route::get(
-        '/provinces-zones/create',
-        [ProvinceController::class, 'create']
-    )->name('provinces-zones.create');
+    Route::get('/provinces-zones/create', [ProvinceController::class, 'create'])
+        ->name('provinces-zones.create');
 
-    Route::post(
-        '/provinces-zones',
-        [ProvinceController::class, 'store']
-    )->name('provinces-zones.store');
+    Route::post('/provinces-zones', [ProvinceController::class, 'store'])
+        ->name('provinces-zones.store');
 
-    Route::get(
-        '/provinces-zones/{province}/edit',
-        [ProvinceController::class, 'edit']
-    )->name('provinces-zones.edit');
+    Route::get('/provinces-zones/{province}/edit', [ProvinceController::class, 'edit'])
+        ->name('provinces-zones.edit');
 
-    Route::put(
-        '/provinces-zones/{province}',
-        [ProvinceController::class, 'update']
-    )->name('provinces-zones.update');
+    Route::put('/provinces-zones/{province}', [ProvinceController::class, 'update'])
+        ->name('provinces-zones.update');
 
-    Route::delete(
-        '/provinces-zones/{province}',
-        [ProvinceController::class, 'destroy']
-    )->name('provinces-zones.destroy');
+    Route::delete('/provinces-zones/{province}', [ProvinceController::class, 'destroy'])
+        ->name('provinces-zones.destroy');
 
-    Route::post(
-        '/provinces-zones/{province}/zones',
-        [ProvinceController::class, 'storeZone']
-    )->name('provinces-zones.zones.store');
+    Route::post('/provinces-zones/{province}/zones', [ProvinceController::class, 'storeZone'])
+        ->name('provinces-zones.zones.store');
 
-    Route::delete(
-        '/provinces-zones/{province}/zones/{zone}',
-        [ProvinceController::class, 'destroyZone']
-    )->name('provinces-zones.zones.destroy');
+    Route::put('/provinces-zones/{province}/zones/{zone}', [ProvinceController::class, 'updateZone'])
+        ->name('provinces-zones.zones.update');
 
-    Route::get(
-        '/settings',
-        [SettingsController::class, 'index']
-    )->name('settings.index');
+    Route::delete('/provinces-zones/{province}/zones/{zone}', [ProvinceController::class, 'destroyZone'])
+        ->name('provinces-zones.zones.destroy');
 
-    Route::get(
-        '/settings/edit',
-        [SettingsController::class, 'edit']
-    )->name('settings.edit');
+    /*
+    |--------------------------------------------------------------------------
+    | PARAMÈTRES
+    |--------------------------------------------------------------------------
+    */
 
-    Route::put(
-        '/settings',
-        [SettingsController::class, 'update']
-    )->name('settings.update');
+    Route::get('/settings', [SettingsController::class, 'index'])
+        ->name('settings.index');
 
-    Route::get(
-        '/daily-report/new-delivery-pdf/{subscription}',
-        [\App\Http\Controllers\PdfNewDeliveryController::class, 'newDeliveryPdf']
-    )->name('daily-report.new-delivery-pdf');
+    Route::get('/settings/edit', [SettingsController::class, 'edit'])
+        ->name('settings.edit');
 
-    Route::get(
-        '/daily-report/subscription-qr-promo-pdf/{subscription}',
-        [\App\Http\Controllers\PdfNewDeliveryController::class, 'subscriptionQrPromoPdf']
-    )->name('daily-report.subscription-qr-promo-pdf');
+    Route::put('/settings', [SettingsController::class, 'update'])
+        ->name('settings.update');
 
-    Route::get(
-        '/daily-report/last-order-renewal-pdf/{subscription}',
-        [\App\Http\Controllers\PdfNewDeliveryController::class, 'lastOrderRenewalPdf']
-    )->name('daily-report.last-order-renewal-pdf');
+    /*
+    |--------------------------------------------------------------------------
+    | RAPPORT JOURNALIER & PDF
+    |--------------------------------------------------------------------------
+    */
 
-    Route::get(
-        '/daily-report/premium-recipes',
-        [PremiumRecipesController::class, 'index']
-    )->name('daily-report.premium-recipes');
+    Route::get('/daily-report', [DailyReportController::class, 'index'])
+        ->name('daily-report.index');
 
-    Route::get(
-        '/daily-report/full-pdf',
-        [DailyReportPdfController::class, 'dailyReportPdf']
-    )->name('daily-report.full-pdf');
+    Route::post('/daily-report/planned-orders/{plannedOrder}/mark-prepared', [DailyReportController::class, 'markPrepared'])
+        ->name('daily-report.planned-orders.mark-prepared');
 
-    Route::get(
-        '/daily-report/last-order-pdf/{subscription}',
-        [\App\Http\Controllers\PdfNewDeliveryController::class, 'lastOrderPdf']
-    )->name('daily-report.last-order-pdf');
+    /*
+    |--------------------------------------------------------------------------
+    | ORDERS (history + JAAK delivery)
+    |--------------------------------------------------------------------------
+    */
 
-    Route::get(
-        '/stock',
-        [StockController::class, 'index']
-    )->name('stock.index');
+    Route::get('/orders', [OrdersController::class, 'index'])
+        ->name('orders.index');
 
-    Route::get(
-        '/stock/edit',
-        [StockController::class, 'edit']
-    )->name('stock.edit');
+    Route::post('/orders/jaak/request-drivers', [OrdersController::class, 'requestDrivers'])
+        ->name('orders.jaak.request-drivers');
 
-    Route::post(
-        '/stock',
-        [StockController::class, 'store']
-    )->name('stock.store');
+    Route::post('/orders/jaak/sync', [OrdersController::class, 'sync'])
+        ->name('orders.jaak.sync');
 
-    Route::get(
-        '/customer-service',
-        [\App\Http\Controllers\CustomerServiceController::class, 'index']
-    )->name('customer-service.index');
+    Route::get('/orders/jaak/check', [OrdersController::class, 'check'])
+        ->name('orders.jaak.check');
 
-    Route::get(
-        '/customer-service/customer/{subscription}',
-        [\App\Http\Controllers\CustomerServiceController::class, 'customer']
-    )->name('customer-service.customer');
+    Route::get('/orders/{plannedOrder}', [OrdersController::class, 'show'])
+        ->whereNumber('plannedOrder')
+        ->name('orders.show');
 
-    Route::get(
-        '/customer-service/reports/create',
-        [\App\Http\Controllers\CustomerServiceReportController::class, 'create']
-    )->name('customer-service.reports.create');
+    Route::post('/orders/{plannedOrder}/jaak/send', [OrdersController::class, 'send'])
+        ->whereNumber('plannedOrder')
+        ->name('orders.jaak.send');
 
-    Route::post(
-        '/customer-service/reports',
-        [\App\Http\Controllers\CustomerServiceReportController::class, 'store']
-    )->name('customer-service.reports.store');
-    
-    Route::post(
-        '/subscriptions/{subscription}/customer-account/reset',
-        [
-            SubscriptionController::class,
-            'resetCustomerAccount'
-        ]
-    )->name('subscriptions.customer-account.reset');
+    Route::get('/daily-report/new-delivery-pdf/{subscription}', [PdfNewDeliveryController::class, 'newDeliveryPdf'])
+        ->name('daily-report.new-delivery-pdf');
 
+    Route::get('/daily-report/subscription-qr-promo-pdf/{subscription}', [PdfNewDeliveryController::class, 'subscriptionQrPromoPdf'])
+        ->name('daily-report.subscription-qr-promo-pdf');
 
+    Route::get('/daily-report/last-order-renewal-pdf/{subscription}', [PdfNewDeliveryController::class, 'lastOrderRenewalPdf'])
+        ->name('daily-report.last-order-renewal-pdf');
 
-    Route::get(
-        '/customer-service/reports/{report}/edit',
-        [\App\Http\Controllers\CustomerServiceReportController::class, 'edit']
-    )->name('customer-service.reports.edit');
+    Route::get('/daily-report/last-order-pdf/{subscription}', [PdfNewDeliveryController::class, 'lastOrderPdf'])
+        ->name('daily-report.last-order-pdf');
 
-    Route::put(
-        '/customer-service/reports/{report}',
-        [\App\Http\Controllers\CustomerServiceReportController::class, 'update']
-    )->name('customer-service.reports.update');
+    Route::get('/daily-report/premium-recipes', [PremiumRecipesController::class, 'index'])
+        ->name('daily-report.premium-recipes');
 
-    Route::delete(
-        '/customer-service/reports/{report}',
-        [\App\Http\Controllers\CustomerServiceReportController::class, 'destroy']
-    )->name('customer-service.reports.destroy');
+    Route::get('/daily-report/full-pdf', [DailyReportPdfController::class, 'dailyReportPdf'])
+        ->name('daily-report.full-pdf');
 
-    Route::get(
-        '/loyalty-program',
-        [LoyaltyProgramController::class, 'index']
-    )->name('loyalty.index');
+    /*
+    |--------------------------------------------------------------------------
+    | STOCK
+    |--------------------------------------------------------------------------
+    */
 
-    Route::get(
-        '/loyalty-program/subscriptions/{subscription}/history',
-        [LoyaltyProgramController::class, 'history']
-    )->name('loyalty.history');
+    Route::get('/stock', [StockController::class, 'index'])
+        ->name('stock.index');
 
-    Route::post(
-        '/loyalty-program/subscriptions/{subscription}/points',
-        [LoyaltyProgramController::class, 'storePoints']
-    )->name('loyalty.points.store');
-    
-   /*
-|--------------------------------------------------------------------------
-| APP COMMUNICATIONS
-|--------------------------------------------------------------------------
-*/
+    Route::get('/stock/edit', [StockController::class, 'edit'])
+        ->name('stock.edit');
 
-Route::get(
-    '/app-communications',
-    [AppCommunicationController::class, 'index']
-)->name('app-communications.index');
+    Route::post('/stock', [StockController::class, 'store'])
+        ->name('stock.store');
 
+    /*
+    |--------------------------------------------------------------------------
+    | APP COMMUNICATIONS
+    |--------------------------------------------------------------------------
+    */
 
-/*
-|--------------------------------------------------------------------------
-| APP COMMUNICATIONS - CUSTOMERS
-|--------------------------------------------------------------------------
-*/
+    Route::get('/app-communications', [AppCommunicationController::class, 'index'])
+        ->name('app-communications.index');
 
-Route::get(
-    '/app-communications/customers',
-    [
-        AppCommunicationCustomerController::class,
-        'index'
-    ]
-)->name(
-    'app-communications.customers.index'
-);
+    Route::get('/app-communications/customers', [AppCommunicationCustomerController::class, 'index'])
+        ->name('app-communications.customers.index');
 
+    Route::get('/app-communications/customers/{customer}/activities', [AppCommunicationCustomerActivityController::class, 'index'])
+        ->name('app-communications.customers.activities');
 
-Route::get(
-    '/app-communications/customers/{customer}/activities',
-    [
-        AppCommunicationCustomerActivityController::class,
-        'index'
-    ]
-)->name(
-    'app-communications.customers.activities'
-);
-Route::get(
-    '/app-communications/activities',
-    [
-        AppCommunicationCustomerActivityController::class,
-        'index'
-    ]
-)->name(
-    'app-communications.activities.index'
-);
+    Route::get('/app-communications/activities', [AppCommunicationCustomerActivityController::class, 'index'])
+        ->name('app-communications.activities.index');
 
-/*
-|--------------------------------------------------------------------------
-| APP COMMUNICATIONS - NOTIFICATIONS
-|--------------------------------------------------------------------------
-*/
+    Route::get('/app-communications/notifications', [AppNotificationController::class, 'index'])
+        ->name('app-communications.notifications.index');
 
-Route::get(
-    '/app-communications/notifications',
-    [AppNotificationController::class, 'index']
-)->name('app-communications.notifications.index');
+    Route::get('/app-communications/notifications/create', [AppNotificationController::class, 'create'])
+        ->name('app-communications.notifications.create');
 
+    Route::post('/app-communications/notifications', [AppNotificationController::class, 'store'])
+        ->name('app-communications.notifications.store');
 
-Route::get(
-    '/app-communications/notifications/create',
-    [AppNotificationController::class, 'create']
-)->name('app-communications.notifications.create');
+    Route::post('/app-communications/notifications/{notification}/send', [AppNotificationController::class, 'send'])
+        ->name('app-communications.notifications.send');
 
-
-Route::post(
-    '/app-communications/notifications',
-    [AppNotificationController::class, 'store']
-)->name('app-communications.notifications.store');
-
-
-Route::post(
-    '/app-communications/notifications/{notification}/send',
-    [AppNotificationController::class, 'send']
-)->name('app-communications.notifications.send');
-
-
-Route::get(
-    '/app-communications/notifications/{notification}',
-    [AppNotificationController::class, 'show']
-)->name('app-communications.notifications.show');
-
+    Route::get('/app-communications/notifications/{notification}', [AppNotificationController::class, 'show'])
+        ->name('app-communications.notifications.show');
 
     /*
     |--------------------------------------------------------------------------
@@ -688,13 +602,18 @@ Route::get(
         ->name('support-tickets.unread-count');
 
     Route::get('/support-tickets/{ticket}', [SupportTicketController::class, 'show'])
-        ->whereNumber('ticket')->name('support-tickets.show');
+        ->whereNumber('ticket')
+        ->name('support-tickets.show');
+
+    Route::get('/support-tickets/{ticket}/messages', [SupportTicketController::class, 'messages'])
+        ->whereNumber('ticket')
+        ->name('support-tickets.messages');
 
     Route::post('/support-tickets/{ticket}/reply', [SupportTicketController::class, 'reply'])
-        ->whereNumber('ticket')->name('support-tickets.reply');
+        ->whereNumber('ticket')
+        ->name('support-tickets.reply');
 
     Route::post('/support-tickets/{ticket}/status', [SupportTicketController::class, 'updateStatus'])
-        ->whereNumber('ticket')->name('support-tickets.status');
-
-
+        ->whereNumber('ticket')
+        ->name('support-tickets.status');
 });

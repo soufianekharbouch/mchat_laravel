@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CustomerAddress;
 use App\Models\PlannedOrder;
 use App\Models\Province;
 use App\Models\Setting;
+use App\Services\JaakClient;
+use App\Services\JaakDispatcher;
+use App\Services\OrderStatusNotifier;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -21,7 +25,8 @@ class DailyReportController extends Controller
         $provincesDb = Province::with('zones')->orderBy('name')->get();
 
         $plannedOrders = PlannedOrder::with([
-            'subscription',
+            // Default customer address = delivery address
+            'subscription.deliveryAddress.zone.province',
             'animal',
             'items.recipe.recipeType',
             'items.recipe.ingredients.ingredient',
@@ -39,11 +44,22 @@ class DailyReportController extends Controller
 
         $plannedOrdersBySubscription = $plannedOrders->groupBy('subscription_id');
 
+        /*
+         * The address comes from the default customer address.
+         * Its values replace subscriber_address / subscriber_province /
+         * subscriber_zone / subscriber_note / subscriber_delivery_slot
+         * in memory: the view keeps working unchanged.
+         * Without customer address, the old subscription values are kept.
+         *
+         * Each order of a subscription shares the same Subscription object,
+         * so the replacement is also visible through $order->subscription.
+         */
         $subscriptions = $plannedOrders
             ->map(fn($o) => $o->subscription)
             ->filter()
             ->unique('id')
             ->values()
+            ->each(fn($sub) => CustomerAddress::applyToSubscription($sub))
             ->sortBy(function ($sub) {
                 return ($sub->subscriber_province ?? '') . ' ' . ($sub->subscriber_zone ?? '');
             })
@@ -177,7 +193,28 @@ class DailyReportController extends Controller
     public function markPrepared(Request $request, PlannedOrder $plannedOrder)
     {
         $plannedOrder->status = 'prepared';
+        $plannedOrder->prepared_at ??= now();
+        $plannedOrder->prepared_by ??= $request->user()?->id;
         $plannedOrder->save();
+
+        // After the answer (never slows the report):
+        //  - customer notified when ALL the pets of the delivery are prepared
+        //  - JAAK delivery task created
+        $orderId = $plannedOrder->id;
+
+        dispatch(function () use ($orderId) {
+            $order = PlannedOrder::find($orderId);
+
+            if (!$order || $order->status !== 'prepared') {
+                return;
+            }
+
+            app(OrderStatusNotifier::class)->notifyIfDeliveryPrepared($order);
+
+            if (JaakClient::enabled()) {
+                app(JaakDispatcher::class)->sendSafely($order);
+            }
+        })->afterResponse();
 
         return response()->json([
             'ok' => true,

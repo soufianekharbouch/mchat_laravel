@@ -446,6 +446,130 @@
                 @endif
 
 
+                {{-- Products (recipe packs) --}}
+                @if(
+                    $authenticatedUser->hasPermission(
+                        'products.view'
+                    )
+                )
+
+                    <li class="nav-item">
+
+                        <a
+                            class="nav-link {{
+                                request()->routeIs('products.*')
+                                    ? 'active'
+                                    : ''
+                            }}"
+                            href="{{ route('products.index') }}"
+                        >
+                            <i class="fas fa-box-open me-2"></i>
+                            Products
+                        </a>
+
+                    </li>
+
+                @endif
+
+
+                {{-- Purchases --}}
+                @if(
+                    $authenticatedUser->hasPermission(
+                        'purchases.view'
+                    )
+                )
+
+                    @php
+                        // PREMIUM-... purchases untreated
+                        $premiumPendingCount = \App\Support\PremiumPack::pendingCount();
+                    @endphp
+
+                    <li class="nav-item">
+
+                        <a
+                            class="nav-link d-flex align-items-center {{
+                                request()->routeIs('purchases.*')
+                                    ? 'active'
+                                    : ''
+                            }}"
+                            href="{{ $premiumPendingCount > 0 ? route('purchases.index', ['premium' => 'pending']) : route('purchases.index') }}"
+                        >
+                            <i class="fas fa-shopping-cart me-2"></i>
+                            Purchases
+
+                            @if($premiumPendingCount > 0)
+                                <span class="badge rounded-pill bg-warning text-dark ms-auto" title="Premium purchases untreated">
+                                    <i class="fas fa-crown me-1"></i>{{ $premiumPendingCount }}
+                                </span>
+                            @endif
+                        </a>
+
+                    </li>
+
+                @endif
+
+
+                {{-- Pet loyalty program (points per pet) --}}
+                @if(
+                    $authenticatedUser->hasPermission(
+                        'pet_loyalty.view'
+                    )
+                )
+
+                    <li class="nav-item">
+
+                        <a
+                            class="nav-link d-flex align-items-center {{
+                                request()->routeIs('pet-loyalty.*')
+                                    ? 'active'
+                                    : ''
+                            }}"
+                            href="{{ route('pet-loyalty.index') }}"
+                        >
+                            <i class="fas fa-star me-2"></i>
+                            Pet Loyalty
+                        </a>
+
+                    </li>
+
+                @endif
+
+
+                {{-- Auto subscription (Shopify orders) --}}
+                @if(
+                    $authenticatedUser->hasPermission(
+                        'auto_subscriptions.view'
+                    )
+                )
+                    @php
+                        $autoSubscriptionCount = \App\Models\ShopifyOrder::unreviewedCount();
+                    @endphp
+
+                    <li class="nav-item">
+
+                        <a
+                            class="nav-link d-flex align-items-center {{
+                                request()->routeIs('auto-subscriptions.*')
+                                    ? 'active'
+                                    : ''
+                            }}"
+                            href="{{ route('auto-subscriptions.index') }}"
+                        >
+                            <i class="fab fa-shopify me-2"></i>
+                            Auto subscription
+
+                            @if($autoSubscriptionCount > 0)
+                                <span class="badge rounded-pill bg-danger ms-auto">
+                                    {{ $autoSubscriptionCount }}
+                                </span>
+                            @endif
+                        </a>
+
+                    </li>
+
+                @endif
+
+
                 {{-- Subscriptions --}}
                 @if(
                     $authenticatedUser->hasPermission(
@@ -495,13 +619,15 @@
 
                     </li>
 
+
+
                 @endif
 
 
-                {{-- Loyalty Program --}}
+                {{-- Orders (history + JAAK delivery) --}}
                 @if(
                     $authenticatedUser->hasPermission(
-                        'loyalty.view'
+                        'orders.view'
                     )
                 )
 
@@ -509,19 +635,21 @@
 
                         <a
                             class="nav-link {{
-                                request()->routeIs('loyalty.*')
+                                request()->routeIs('orders.*')
                                     ? 'active'
                                     : ''
                             }}"
-                            href="{{ route('loyalty.index') }}"
+                            href="{{ route('orders.index') }}"
                         >
-                            <i class="fas fa-gift me-2"></i>
-                            Loyalty Program
+                            <i class="fas fa-truck me-2"></i>
+                            Orders
                         </a>
 
                     </li>
 
                 @endif
+
+
 
 
                 {{-- Stock Management --}}
@@ -591,30 +719,6 @@
                 @endif
 
 
-                {{-- Customer Service --}}
-                @if(
-                    $authenticatedUser->hasPermission(
-                        'customer_service.view'
-                    )
-                )
-
-                    <li class="nav-item">
-
-                        <a
-                            class="nav-link {{
-                                request()->routeIs('customer-service.*')
-                                    ? 'active'
-                                    : ''
-                            }}"
-                            href="{{ route('customer-service.index') }}"
-                        >
-                            <i class="fas fa-headset me-2"></i>
-                            Customer Service
-                        </a>
-
-                    </li>
-
-                @endif
 
 
                 {{-- Support Tickets --}}

@@ -33,6 +33,49 @@ class MobileCustomerSettingsController extends Controller
         )->first();
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | LANGUAGE RESOLUTION
+    |--------------------------------------------------------------------------
+    |
+    | Priority : "lang" sent by the app > customer settings > English.
+    |
+    */
+
+    private function language(Request $request, CustomerAccount $customer): string
+    {
+        $settings = is_array($customer->settings) ? $customer->settings : [];
+
+        $lang = $request->input('lang')
+            ?? ($settings['language'] ?? 'en');
+
+        return $lang === 'ar' ? 'ar' : 'en';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ADDRESSES FORMATTED FOR THE APP
+    |--------------------------------------------------------------------------
+    */
+
+    private function customerAddresses(CustomerAccount $customer, string $lang)
+    {
+        return CustomerAddress::with(['provinceRelation', 'zone'])
+            ->where('customer_account_id', $customer->id)
+            ->orderByDesc('is_default')
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (CustomerAddress $address) => $address->toMobileArray($lang))
+            ->values();
+    }
+
+    private function formatAddress(CustomerAddress $address, string $lang): array
+    {
+        return $address
+            ->fresh(['provinceRelation', 'zone'])
+            ->toMobileArray($lang);
+    }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -43,16 +86,18 @@ class MobileCustomerSettingsController extends Controller
     public function show(Request $request)
     {
         $customer = $this->customer($request);
-    
+
         if (!$customer) {
             return response()->json([
                 'message' => 'Unauthenticated.',
             ], 401);
         }
-    
+
         $customer->load('subscription');
-    
+
         $subscription = $customer->subscription;
+
+        $lang = $this->language($request, $customer);
 
         $supportUnread = SupportTicketMessage::query()
             ->join('support_tickets', 'support_tickets.id', '=', 'support_ticket_messages.support_ticket_id')
@@ -60,39 +105,26 @@ class MobileCustomerSettingsController extends Controller
             ->where('support_ticket_messages.sender_type', 'admin')
             ->whereNull('support_ticket_messages.read_at')
             ->count();
-    
+
+        $addresses = $this->customerAddresses($customer, $lang);
+
         return response()->json([
             'customer' => [
                 'id' => $customer->id,
-    
-                'first_name' =>
-                    $subscription?->subscriber_first_name,
-    
-                'last_name' =>
-                    $subscription?->subscriber_last_name,
-    
+                'first_name' => $subscription?->subscriber_first_name,
+                'last_name' => $subscription?->subscriber_last_name,
                 'phone' => $customer->phone,
-    
                 'email' => $customer->email,
             ],
-    
+
             'counters' => [
-                'addresses' => $customer
-                    ->addresses()
-                    ->count(),
+                'addresses' => $addresses->count(),
                 'support_unread' => $supportUnread,
             ],
-    
-            'settings' =>
-                $customer->settings
-                ?? new \stdClass(),
-    
-            'addresses' =>
-                $customer
-                    ->addresses()
-                    ->orderByDesc('is_default')
-                    ->orderByDesc('id')
-                    ->get(),
+
+            'settings' => $customer->settings ?? new \stdClass(),
+
+            'addresses' => $addresses,
         ]);
     }
 
@@ -118,16 +150,12 @@ class MobileCustomerSettingsController extends Controller
         }
 
         $validated = $request->validate([
-            'settings' => [
-                'required',
-                'array',
-            ],
+            'settings' => ['required', 'array'],
         ]);
 
-        $currentSettings =
-            is_array($customer->settings)
-                ? $customer->settings
-                : [];
+        $currentSettings = is_array($customer->settings)
+            ? $customer->settings
+            : [];
 
         $customer->settings = array_merge(
             $currentSettings,
@@ -160,22 +188,14 @@ class MobileCustomerSettingsController extends Controller
         }
 
         $validated = $request->validate([
-            'language' => [
-                'required',
-                Rule::in([
-                    'en',
-                    'ar',
-                ]),
-            ],
+            'language' => ['required', Rule::in(['en', 'ar'])],
         ]);
 
-        $settings =
-            is_array($customer->settings)
-                ? $customer->settings
-                : [];
+        $settings = is_array($customer->settings)
+            ? $customer->settings
+            : [];
 
-        $settings['language'] =
-            $validated['language'];
+        $settings['language'] = $validated['language'];
 
         $customer->settings = $settings;
 
@@ -206,28 +226,13 @@ class MobileCustomerSettingsController extends Controller
         }
 
         $validated = $request->validate([
-            'current_password' => [
-                'required',
-                'string',
-            ],
-
-            'password' => [
-                'required',
-                'string',
-                'min:8',
-                'confirmed',
-            ],
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        if (
-            !Hash::check(
-                $validated['current_password'],
-                $customer->password
-            )
-        ) {
+        if (!Hash::check($validated['current_password'], $customer->password)) {
             return response()->json([
                 'message' => 'Current password is incorrect.',
-
                 'errors' => [
                     'current_password' => [
                         'Current password is incorrect.',
@@ -236,9 +241,7 @@ class MobileCustomerSettingsController extends Controller
             ], 422);
         }
 
-        $customer->password = Hash::make(
-            $validated['password']
-        );
+        $customer->password = Hash::make($validated['password']);
 
         $customer->save();
 
@@ -269,16 +272,11 @@ class MobileCustomerSettingsController extends Controller
                 'required',
                 'string',
                 'max:30',
-
-                Rule::unique(
-                    'customer_accounts',
-                    'phone'
-                )->ignore($customer->id),
+                Rule::unique('customer_accounts', 'phone')->ignore($customer->id),
             ],
         ]);
 
-        $customer->phone =
-            trim($validated['phone']);
+        $customer->phone = trim($validated['phone']);
 
         $customer->save();
 
@@ -310,20 +308,13 @@ class MobileCustomerSettingsController extends Controller
                 'nullable',
                 'email',
                 'max:255',
-
-                Rule::unique(
-                    'customer_accounts',
-                    'email'
-                )->ignore($customer->id),
+                Rule::unique('customer_accounts', 'email')->ignore($customer->id),
             ],
         ]);
 
-        $customer->email =
-            !empty($validated['email'])
-                ? strtolower(
-                    trim($validated['email'])
-                )
-                : null;
+        $customer->email = !empty($validated['email'])
+            ? strtolower(trim($validated['email']))
+            : null;
 
         $customer->save();
 
@@ -350,16 +341,11 @@ class MobileCustomerSettingsController extends Controller
             ], 401);
         }
 
-        $addresses = CustomerAddress::where(
-            'customer_account_id',
-            $customer->id
-        )
-            ->orderByDesc('is_default')
-            ->orderByDesc('id')
-            ->get();
-
         return response()->json([
-            'addresses' => $addresses,
+            'addresses' => $this->customerAddresses(
+                $customer,
+                $this->language($request, $customer)
+            ),
         ]);
     }
 
@@ -380,96 +366,53 @@ class MobileCustomerSettingsController extends Controller
             ], 401);
         }
 
-        $validated = $this->validateAddress(
-            $request
-        );
+        $validated = $this->validateAddress($request);
 
-        return DB::transaction(
-            function () use (
-                $customer,
-                $validated
-            ) {
+        $lang = $this->language($request, $customer);
 
-                $hasAddress =
-                    CustomerAddress::where(
-                        'customer_account_id',
-                        $customer->id
-                    )->exists();
+        return DB::transaction(function () use ($customer, $validated, $lang) {
 
-                /*
-                 * First address automatically
-                 * becomes the default address.
-                 */
+            $hasAddress = CustomerAddress::where('customer_account_id', $customer->id)
+                ->exists();
 
-                $isDefault =
-                    !$hasAddress
-                    || !empty(
-                        $validated['is_default']
-                    );
+            /*
+             * First address automatically
+             * becomes the default address.
+             */
+            $isDefault = !$hasAddress || !empty($validated['is_default']);
 
-                if ($isDefault) {
-                    CustomerAddress::where(
-                        'customer_account_id',
-                        $customer->id
-                    )->update([
-                        'is_default' => false,
-                    ]);
-                }
-
-                $address =
-                    CustomerAddress::create([
-                        'customer_account_id' =>
-                            $customer->id,
-
-                        'label' =>
-                            $validated['label']
-                            ?? null,
-
-                        'first_name' =>
-                            $validated['first_name']
-                            ?? null,
-
-                        'last_name' =>
-                            $validated['last_name']
-                            ?? null,
-
-                        'phone' =>
-                            $validated['phone']
-                            ?? null,
-
-                        'address' =>
-                            $validated['address'],
-
-                        'city' =>
-                            $validated['city']
-                            ?? null,
-
-                        'province' =>
-                            $validated['province']
-                            ?? null,
-
-                        'postal_code' =>
-                            $validated['postal_code']
-                            ?? null,
-
-                        'country' =>
-                            $validated['country']
-                            ?? null,
-
-                        'note' =>
-                            $validated['note']
-                            ?? null,
-
-                        'is_default' =>
-                            $isDefault,
-                    ]);
-
-                return response()->json([
-                    'message' => 'Address created successfully.',
-                    'address' => $address,
-                ], 201);
+            if ($isDefault) {
+                CustomerAddress::where('customer_account_id', $customer->id)
+                    ->update(['is_default' => false]);
             }
-        );
+
+            /*
+             * When zone_id is sent, the model fills
+             * province_id, city and province automatically.
+             */
+            $address = CustomerAddress::create([
+                'customer_account_id' => $customer->id,
+                'label' => $validated['label'] ?? null,
+                'first_name' => $validated['first_name'] ?? null,
+                'last_name' => $validated['last_name'] ?? null,
+                'phone' => $validated['phone'] ?? null,
+                'address' => $validated['address'],
+                'province_id' => $validated['province_id'] ?? null,
+                'zone_id' => $validated['zone_id'] ?? null,
+                'city' => $validated['city'] ?? null,
+                'province' => $validated['province'] ?? null,
+                'postal_code' => $validated['postal_code'] ?? null,
+                'country' => $validated['country'] ?? null,
+                'note' => $validated['note'] ?? null,
+                'delivery_slot' => $validated['delivery_slot'] ?? null,
+                'is_default' => $isDefault,
+            ]);
+
+            return response()->json([
+                'message' => 'Address created successfully.',
+                'address' => $this->formatAddress($address, $lang),
+            ], 201);
+        });
     }
 
 
@@ -479,10 +422,8 @@ class MobileCustomerSettingsController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function updateAddress(
-        Request $request,
-        CustomerAddress $address
-    ) {
+    public function updateAddress(Request $request, CustomerAddress $address)
+    {
         $customer = $this->customer($request);
 
         if (!$customer) {
@@ -491,104 +432,70 @@ class MobileCustomerSettingsController extends Controller
             ], 401);
         }
 
-        if (
-            (int) $address->customer_account_id
-            !==
-            (int) $customer->id
-        ) {
+        if ((int) $address->customer_account_id !== (int) $customer->id) {
             return response()->json([
                 'message' => 'Address not found.',
             ], 404);
         }
 
-        $validated = $this->validateAddress(
-            $request
-        );
+        $validated = $this->validateAddress($request);
 
-        return DB::transaction(
-            function () use (
-                $customer,
-                $address,
-                $validated
-            ) {
+        $lang = $this->language($request, $customer);
 
-                if (
-                    !empty(
-                        $validated['is_default']
-                    )
-                ) {
-                    CustomerAddress::where(
-                        'customer_account_id',
-                        $customer->id
-                    )
-                        ->where(
-                            'id',
-                            '!=',
-                            $address->id
-                        )
-                        ->update([
-                            'is_default' => false,
-                        ]);
-                }
+        return DB::transaction(function () use ($customer, $address, $validated, $lang) {
 
-                $address->update([
-                    'label' =>
-                        $validated['label']
-                        ?? null,
-
-                    'first_name' =>
-                        $validated['first_name']
-                        ?? null,
-
-                    'last_name' =>
-                        $validated['last_name']
-                        ?? null,
-
-                    'phone' =>
-                        $validated['phone']
-                        ?? null,
-
-                    'address' =>
-                        $validated['address'],
-
-                    'city' =>
-                        $validated['city']
-                        ?? $address->city,
-
-                    'province' =>
-                        $validated['province']
-                        ?? $address->province,
-
-                    'postal_code' =>
-                        $validated['postal_code']
-                        ?? $address->postal_code,
-
-                    'country' =>
-                        $validated['country']
-                        ?? $address->country,
-
-                    'note' =>
-                        $validated['note']
-                        ?? null,
-
-                    /*
-                     * Do not remove the default status
-                     * simply by editing the address.
-                     */
-                    'is_default' =>
-                        !empty(
-                            $validated['is_default']
-                        )
-                            ? true
-                            : $address->is_default,
-                ]);
-
-                return response()->json([
-                    'message' => 'Address updated successfully.',
-                    'address' => $address->fresh(),
-                ]);
+            if (!empty($validated['is_default'])) {
+                CustomerAddress::where('customer_account_id', $customer->id)
+                    ->where('id', '!=', $address->id)
+                    ->update(['is_default' => false]);
             }
-        );
+
+            $address->update([
+                'label' => $validated['label'] ?? null,
+                'first_name' => $validated['first_name'] ?? null,
+                'last_name' => $validated['last_name'] ?? null,
+                'phone' => $validated['phone'] ?? null,
+                'address' => $validated['address'],
+
+                /*
+                 * province_id / zone_id : kept when not sent
+                 * (older app versions), cleared when sent as null.
+                 */
+                'province_id' => array_key_exists('province_id', $validated)
+                    ? $validated['province_id']
+                    : $address->province_id,
+
+                'zone_id' => array_key_exists('zone_id', $validated)
+                    ? $validated['zone_id']
+                    : $address->zone_id,
+
+                'city' => $validated['city'] ?? $address->city,
+                'province' => $validated['province'] ?? $address->province,
+                'postal_code' => $validated['postal_code'] ?? $address->postal_code,
+                'country' => $validated['country'] ?? $address->country,
+                'note' => $validated['note'] ?? null,
+
+                /*
+                 * delivery_slot : kept when not sent (older app versions).
+                 */
+                'delivery_slot' => array_key_exists('delivery_slot', $validated)
+                    ? $validated['delivery_slot']
+                    : $address->delivery_slot,
+
+                /*
+                 * Do not remove the default status
+                 * simply by editing the address.
+                 */
+                'is_default' => !empty($validated['is_default'])
+                    ? true
+                    : $address->is_default,
+            ]);
+
+            return response()->json([
+                'message' => 'Address updated successfully.',
+                'address' => $this->formatAddress($address, $lang),
+            ]);
+        });
     }
 
 
@@ -598,10 +505,8 @@ class MobileCustomerSettingsController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function setDefaultAddress(
-        Request $request,
-        CustomerAddress $address
-    ) {
+    public function setDefaultAddress(Request $request, CustomerAddress $address)
+    {
         $customer = $this->customer($request);
 
         if (!$customer) {
@@ -610,38 +515,26 @@ class MobileCustomerSettingsController extends Controller
             ], 401);
         }
 
-        if (
-            (int) $address->customer_account_id
-            !==
-            (int) $customer->id
-        ) {
+        if ((int) $address->customer_account_id !== (int) $customer->id) {
             return response()->json([
                 'message' => 'Address not found.',
             ], 404);
         }
 
-        DB::transaction(
-            function () use (
-                $customer,
-                $address
-            ) {
+        DB::transaction(function () use ($customer, $address) {
 
-                CustomerAddress::where(
-                    'customer_account_id',
-                    $customer->id
-                )->update([
-                    'is_default' => false,
-                ]);
+            CustomerAddress::where('customer_account_id', $customer->id)
+                ->update(['is_default' => false]);
 
-                $address->update([
-                    'is_default' => true,
-                ]);
-            }
-        );
+            $address->update(['is_default' => true]);
+        });
 
         return response()->json([
             'message' => 'Default address updated successfully.',
-            'address' => $address->fresh(),
+            'address' => $this->formatAddress(
+                $address,
+                $this->language($request, $customer)
+            ),
         ]);
     }
 
@@ -652,10 +545,8 @@ class MobileCustomerSettingsController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function destroyAddress(
-        Request $request,
-        CustomerAddress $address
-    ) {
+    public function destroyAddress(Request $request, CustomerAddress $address)
+    {
         $customer = $this->customer($request);
 
         if (!$customer) {
@@ -664,50 +555,32 @@ class MobileCustomerSettingsController extends Controller
             ], 401);
         }
 
-        if (
-            (int) $address->customer_account_id
-            !==
-            (int) $customer->id
-        ) {
+        if ((int) $address->customer_account_id !== (int) $customer->id) {
             return response()->json([
                 'message' => 'Address not found.',
             ], 404);
         }
 
-        DB::transaction(
-            function () use (
-                $customer,
-                $address
-            ) {
+        DB::transaction(function () use ($customer, $address) {
 
-                $wasDefault =
-                    (bool) $address->is_default;
+            $wasDefault = (bool) $address->is_default;
 
-                $address->delete();
+            $address->delete();
 
-                /*
-                 * If the default address was deleted,
-                 * automatically select another one.
-                 */
+            /*
+             * If the default address was deleted,
+             * automatically select another one.
+             */
+            if ($wasDefault) {
+                $nextAddress = CustomerAddress::where('customer_account_id', $customer->id)
+                    ->orderByDesc('id')
+                    ->first();
 
-                if ($wasDefault) {
-
-                    $nextAddress =
-                        CustomerAddress::where(
-                            'customer_account_id',
-                            $customer->id
-                        )
-                            ->orderByDesc('id')
-                            ->first();
-
-                    if ($nextAddress) {
-                        $nextAddress->update([
-                            'is_default' => true,
-                        ]);
-                    }
+                if ($nextAddress) {
+                    $nextAddress->update(['is_default' => true]);
                 }
             }
-        );
+        });
 
         return response()->json([
             'message' => 'Address deleted successfully.',
@@ -719,76 +592,44 @@ class MobileCustomerSettingsController extends Controller
     |--------------------------------------------------------------------------
     | ADDRESS VALIDATION
     |--------------------------------------------------------------------------
+    |
+    | province_id / zone_id are nullable so older app versions
+    | (sending only city / province text) keep working.
+    | Switch them to 'required' once every customer uses the new version.
+    |
     */
 
-    private function validateAddress(
-        Request $request
-    ): array {
+    private function validateAddress(Request $request): array
+    {
+        $zoneExists = Rule::exists('zones', 'id');
+
+        /*
+         * The zone must belong to the selected province.
+         */
+        if ($request->filled('province_id')) {
+            $zoneExists->where('province_id', (int) $request->input('province_id'));
+        }
+
         return $request->validate([
-            'label' => [
-                'nullable',
-                'string',
-                'max:100',
-            ],
+            'label' => ['nullable', 'string', 'max:100'],
+            'first_name' => ['nullable', 'string', 'max:100'],
+            'last_name' => ['nullable', 'string', 'max:100'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'address' => ['required', 'string', 'max:500'],
 
-            'first_name' => [
-                'nullable',
-                'string',
-                'max:100',
-            ],
+            'province_id' => ['nullable', 'integer', 'exists:provinces,id'],
+            'zone_id' => ['nullable', 'integer', $zoneExists],
 
-            'last_name' => [
-                'nullable',
-                'string',
-                'max:100',
-            ],
-
-            'phone' => [
-                'nullable',
-                'string',
-                'max:30',
-            ],
-
-            'address' => [
-                'required',
-                'string',
-                'max:500',
-            ],
-
-            'city' => [
-                'nullable',
-                'string',
-                'max:150',
-            ],
-
-            'province' => [
-                'nullable',
-                'string',
-                'max:150',
-            ],
-
-            'postal_code' => [
-                'nullable',
-                'string',
-                'max:30',
-            ],
-
-            'country' => [
-                'nullable',
-                'string',
-                'max:100',
-            ],
-
-            'note' => [
-                'nullable',
-                'string',
-                'max:1000',
-            ],
-
-            'is_default' => [
-                'sometimes',
-                'boolean',
-            ],
+            'city' => ['nullable', 'string', 'max:150'],
+            'province' => ['nullable', 'string', 'max:150'],
+            'postal_code' => ['nullable', 'string', 'max:30'],
+            'country' => ['nullable', 'string', 'max:100'],
+            'note' => ['nullable', 'string', 'max:1000'],
+            'delivery_slot' => ['nullable', Rule::in(CustomerAddress::DELIVERY_SLOTS)],
+            'is_default' => ['sometimes', 'boolean'],
+        ], [
+            'delivery_slot.in' => 'The selected delivery time slot is invalid.',
+            'zone_id.exists' => 'The selected zone does not belong to the selected province.',
         ]);
     }
 }

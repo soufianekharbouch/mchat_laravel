@@ -37,19 +37,134 @@
         }
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Delivery address (customer_addresses, default address)
+    |--------------------------------------------------------------------------
+    |
+    | The delivery address is now the customer's DEFAULT address
+    | in customer_addresses. The subscription columns
+    | (subscriber_address / subscriber_province / subscriber_zone)
+    | are kept in sync automatically for PDFs and reports.
+    |
+    */
+    $customerAddresses = $customerAccountExists
+        ? ($customerAccount->addresses ?? collect())->sortByDesc('is_default')->values()
+        : collect();
+
+    $deliveryAddress = $customerAddresses->firstWhere('is_default', true)
+        ?? $customerAddresses->first();
+
+    $otherAddresses = $deliveryAddress
+        ? $customerAddresses->where('id', '!=', $deliveryAddress->id)->values()
+        : collect();
+
+    /*
+     * Fallback for legacy data: match the subscription text values
+     * when the address has no province_id / zone_id yet.
+     */
+    $fallbackProvince = $isEdit && !empty($subscription->subscriber_province)
+        ? $provinces->first(fn ($p) => strcasecmp(trim($p->name), trim($subscription->subscriber_province)) === 0)
+        : null;
+
+    $fallbackZone = $fallbackProvince && !empty($subscription->subscriber_zone)
+        ? $fallbackProvince->zones->first(fn ($z) => strcasecmp(trim($z->name), trim($subscription->subscriber_zone)) === 0)
+        : null;
+
+    $selectedProvinceId = (string) old(
+        'address_province_id',
+        $deliveryAddress->province_id ?? ($fallbackProvince->id ?? '')
+    );
+
+    $selectedZoneId = (string) old(
+        'address_zone_id',
+        $deliveryAddress->zone_id ?? ($fallbackZone->id ?? '')
+    );
+
+    $addressLabelValue = old('address_label', $deliveryAddress->label ?? 'Home');
+    $addressLineValue = old('address_line', $deliveryAddress->address ?? ($subscription->subscriber_address ?? ''));
+    $addressNoteValue = old('address_note', $deliveryAddress->note ?? ($subscription->subscriber_note ?? ''));
+
+    /*
+     * Data for JavaScript (province -> zones, province -> code), keyed by id.
+     */
+    $zonesByProvinceJs = $provinces->mapWithKeys(function ($province) {
+        return [
+            $province->id => $province->zones
+                ->sortBy('name')
+                ->map(function ($zone) {
+                    return [
+                        'id' => $zone->id,
+                        'name' => $zone->name,
+                        'name_ar' => $zone->name_ar,
+                    ];
+                })
+                ->values(),
+        ];
+    });
+
     $provinceCodes = $provinces->mapWithKeys(function ($province) {
         return [
-            $province->name => str_pad($province->code, 2, '0', STR_PAD_LEFT)
+            $province->id => str_pad($province->code, 2, '0', STR_PAD_LEFT)
         ];
     })->toArray();
-    $selectedProvince = old('subscriber_province', $subscription->subscriber_province ?? '');
-    $selectedZone = old('subscriber_zone', $subscription->subscriber_zone ?? '');
-    $selectedDeliverySlot = old('subscriber_delivery_slot', $subscription->subscriber_delivery_slot ?? '');
+
+    /*
+     * Delivery slot is now a field of the delivery address
+     * (customer_addresses.delivery_slot). Fallback: legacy subscription value.
+     */
+    $selectedDeliverySlot = (string) old(
+        'address_delivery_slot',
+        $deliveryAddress->delivery_slot ?? ($subscription->subscriber_delivery_slot ?? '')
+    );
+
+    /*
+     * Deliveries of purchased packs (mobile app / Purchases menu).
+     * Shown read-only in the calendar: they are managed by the pack,
+     * not by this form.
+     */
+    $packDaysFor = function ($animalId) {
+        if (!$animalId) {
+            return [];
+        }
+
+        $days = [];
+
+        $deliveries = \App\Models\PurchaseDelivery::query()
+            ->with(['items', 'purchase:id,reference,product_name,animal_id'])
+            ->where('status', '!=', 'cancelled')
+            ->whereHas('purchase', fn ($q) => $q->where('animal_id', $animalId))
+            ->orderBy('delivery_date')
+            ->get();
+
+        foreach ($deliveries as $delivery) {
+            $date = \Carbon\Carbon::parse($delivery->delivery_date)->format('Y-m-d');
+
+            $days[$date] = [
+                'reference' => $delivery->purchase?->reference,
+                'purchase_id' => $delivery->purchase_id,
+                'product' => $delivery->purchase?->product_name,
+                'number' => $delivery->delivery_number,
+                'status' => $delivery->status,
+                'slot' => $delivery->delivery_slot,
+                'total' => (int) $delivery->items->sum('quantity'),
+                'items' => $delivery->items->map(fn ($item) => [
+                    'name' => $item->recipe_name,
+                    'qty' => (int) $item->quantity,
+                ])->values()->all(),
+            ];
+        }
+
+        return $days;
+    };
 
     $oldAnimals = old('animals');
     $existingAnimals = $isEdit ? ($subscription->animals ?? collect()) : collect();
 
-    $animalsData = $oldAnimals ?? ($existingAnimals->count() ? ($existingAnimals->map(function($a) {
+    // Pack deliveries per saved animal id (used by the calendar JavaScript)
+    $savedPackDaysByAnimal = $existingAnimals->mapWithKeys(fn ($a) => [$a->id => $packDaysFor($a->id)]);
+
+    $animalsData = $oldAnimals ?? ($existingAnimals->count() ? ($existingAnimals->map(function($a) use ($packDaysFor) {
         $days = [];
 
         $mealDates = $a->relationLoaded('mealDates') ? ($a->mealDates ?? collect()) : collect();
@@ -88,6 +203,7 @@
             'subscription_start' => optional($a->subscription_start)->format('Y-m-d'),
             'subscription_end' => optional($a->subscription_end)->format('Y-m-d'),
             'day_meals' => $days,
+            'pack_days' => $packDaysFor($a->id),
         ];
     })->toArray()) : []);
 
@@ -151,11 +267,15 @@
         <div class="col-md-6 mb-3">
             <label for="code" class="form-label">Code *</label>
             <input type="text"
-                class="form-control"
+                class="form-control @error('code') is-invalid @enderror"
                 id="code"
                 name="code"
                 value="{{ old('code', $subscription->code ?? ($nextSubscriptionCode ?? '')) }}"
                 required>
+
+            @error('code')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
         <div class="col-md-6 mb-3">
             <label for="creation_date" class="form-label">Creation Date</label>
@@ -167,8 +287,12 @@
     <div class="row">
         <div class="col-md-6 mb-3">
             <label for="subscriber_first_name" class="form-label">First Name *</label>
-            <input type="text" class="form-control" id="subscriber_first_name" name="subscriber_first_name"
+            <input type="text" class="form-control @error('subscriber_first_name') is-invalid @enderror" id="subscriber_first_name" name="subscriber_first_name"
                    value="{{ old('subscriber_first_name', $subscription->subscriber_first_name ?? '') }}" required>
+
+            @error('subscriber_first_name')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
         <div class="col-md-6 mb-3">
             <label for="subscriber_last_name" class="form-label">Last Name</label>
@@ -177,46 +301,158 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-4 mb-3">
-            <label for="subscriber_province" class="form-label">Province/Region *</label>
-            <select class="form-select" id="subscriber_province" name="subscriber_province" required>
-                <option value="">Select province</option>
-                @foreach($provinces as $province)
-                    <option value="{{ $province->name }}" {{ $selectedProvince === $province->name ? 'selected' : '' }}>
-                        {{ $province->name }}
-                    </option>
+    {{-- ================================================================
+         DELIVERY ADDRESS (customer default address)
+    ================================================================ --}}
+
+    <div class="delivery-address-box mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="fw-semibold">
+                <i class="fas fa-location-dot me-1 text-mauve"></i>
+                Delivery address
+            </div>
+
+            <span class="small text-muted">
+                Customer's default address (also visible in the mobile app)
+            </span>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label for="address_label" class="form-label">Label</label>
+                <input type="text"
+                       class="form-control @error('address_label') is-invalid @enderror"
+                       id="address_label"
+                       name="address_label"
+                       value="{{ $addressLabelValue }}"
+                       placeholder="Home">
+
+                @error('address_label')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label for="address_province_id" class="form-label">Province/Region *</label>
+                <select class="form-select @error('address_province_id') is-invalid @enderror"
+                        id="address_province_id"
+                        name="address_province_id"
+                        required>
+                    <option value="">Select province</option>
+                    @foreach($provinces as $province)
+                        <option value="{{ $province->id }}" {{ $selectedProvinceId === (string) $province->id ? 'selected' : '' }}>
+                            {{ $province->name }}@if(filled($province->name_ar)) — {{ $province->name_ar }}@endif
+                        </option>
+                    @endforeach
+                </select>
+
+                @error('address_province_id')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label for="address_zone_id" class="form-label">Zone *</label>
+                <select class="form-select @error('address_zone_id') is-invalid @enderror"
+                        id="address_zone_id"
+                        name="address_zone_id"
+                        data-selected-zone="{{ $selectedZoneId }}"
+                        required>
+                    <option value="">Select zone</option>
+                </select>
+
+                @error('address_zone_id')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label for="address_delivery_slot" class="form-label">Delivery Time Slot</label>
+                <select class="form-select @error('address_delivery_slot') is-invalid @enderror"
+                        id="address_delivery_slot"
+                        name="address_delivery_slot">
+                    <option value="">Select a time slot</option>
+                    @foreach($deliverySlots as $value => $label)
+                        <option value="{{ $value }}" {{ $selectedDeliverySlot === $value ? 'selected' : '' }}>
+                            {{ $label }}
+                        </option>
+                    @endforeach
+                </select>
+
+                @error('address_delivery_slot')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="address_line" class="form-label">Address details *</label>
+                <textarea class="form-control @error('address_line') is-invalid @enderror"
+                          id="address_line"
+                          name="address_line"
+                          rows="3"
+                          required>{{ $addressLineValue }}</textarea>
+
+                @error('address_line')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label for="address_note" class="form-label">Delivery note</label>
+                <textarea class="form-control @error('address_note') is-invalid @enderror"
+                          id="address_note"
+                          name="address_note"
+                          rows="3"
+                          placeholder="Free text...">{{ $addressNoteValue }}</textarea>
+
+                @error('address_note')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
+        @if($otherAddresses->isNotEmpty())
+            <div class="other-addresses">
+                <div class="small fw-semibold mb-1">
+                    Other addresses saved by the customer in the app
+                </div>
+
+                @foreach($otherAddresses as $otherAddress)
+                    <div class="other-address-item small">
+                        <i class="fas fa-map-pin me-1 text-muted"></i>
+                        <strong>{{ $otherAddress->label ?: 'Address' }}</strong>
+                        —
+                        {{ collect([$otherAddress->address, $otherAddress->city, $otherAddress->getAttribute('province')])->filter()->implode(', ') }}
+                        @if(filled($otherAddress->delivery_slot))
+                            <span class="badge bg-light text-dark border ms-1">{{ $otherAddress->delivery_slot }}</span>
+                        @endif
+                    </div>
                 @endforeach
-            </select>
-        </div>
 
-        <div class="col-md-4 mb-3">
-            <label for="subscriber_zone" class="form-label">Zone *</label>
-            <select class="form-select"
-                    id="subscriber_zone"
-                    name="subscriber_zone"
-                    data-selected-zone="{{ $selectedZone }}"
-                    required>
-                <option value="">Select zone</option>
-            </select>
-        </div>
-
-        <div class="col-md-4 mb-3">
-            <label for="subscriber_address" class="form-label">Address details *</label>
-            <textarea class="form-control" id="subscriber_address" name="subscriber_address" rows="3" required>{{ old('subscriber_address', $subscription->subscriber_address ?? '') }}</textarea>
-        </div>
+                <div class="small text-muted mt-1">
+                    The customer can choose another default address from the app.
+                </div>
+            </div>
+        @endif
     </div>
 
     <div class="row">
         <div class="col-md-4 mb-3">
-            <label for="subscriber_phone" class="form-label">Phone</label>
+            <label for="subscriber_phone" class="form-label">Phone *</label>
             <input
                 type="text"
                 class="form-control @error('subscriber_phone') is-invalid @enderror"
                 id="subscriber_phone"
                 name="subscriber_phone"
                 value="{{ old('subscriber_phone', $subscription->subscriber_phone ?? '') }}"
+                required
             >
+
+            <div class="form-text">
+                Used for the customer app login and the delivery address.
+            </div>
 
             @error('subscriber_phone')
                 <div class="invalid-feedback">
@@ -251,6 +487,7 @@
 
                     <div class="customer-account-status-text">
                         This subscription does not currently have a customer dashboard account.
+                        It will be created automatically when you save with a phone number.
                     </div>
 
                     <button
@@ -327,24 +564,6 @@
             name="shopify_customer_id"
             value="{{ old('shopify_customer_id', $subscription->shopify_customer_id ?? '') }}"
         >
-
-        <div class="col-md-4 mb-3">
-            <label for="subscriber_delivery_slot" class="form-label">Delivery Time Slot</label>
-            <select class="form-select" id="subscriber_delivery_slot" name="subscriber_delivery_slot">
-                <option value="">Select a time slot</option>
-                @foreach($deliverySlots as $value => $label)
-                    <option value="{{ $value }}" {{ $selectedDeliverySlot === $value ? 'selected' : '' }}>
-                        {{ $label }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-
-        <div class="col-md-4 mb-3">
-            <label for="subscriber_note" class="form-label">Note</label>
-            <textarea class="form-control" id="subscriber_note" name="subscriber_note" rows="2"
-                      placeholder="Free text...">{{ old('subscriber_note', $subscription->subscriber_note ?? '') }}</textarea>
-        </div>
     </div>
 
     @if($errors->has('animals'))
@@ -396,7 +615,7 @@
                                         if (!empty($animal['breed_size_category']) && ($animal['species'] ?? '') === 'Dog') $parts[] = $animal['breed_size_category'];
                                         if (!empty($animal['age'])) $parts[] = $animal['age'];
                                         if (!empty($animal['health_status'])) $parts[] = $animal['health_status'];
-                                        echo implode(' • ', $parts);
+                                        echo e(implode(' • ', $parts));
                                     @endphp
                                 </div>
                             </div>
@@ -613,6 +832,13 @@
                                     <div class="selected-days-list" data-animal-index="{{ $index }}"></div>
                                 </div>
 
+                                <div class="pack-days-wrap mt-3" style="display:none;">
+                                    <div class="small fw-semibold mb-2">
+                                        <i class="fas fa-box-open me-1"></i>Pack deliveries (app / Purchases, read-only)
+                                    </div>
+                                    <div class="pack-days-list" data-animal-index="{{ $index }}"></div>
+                                </div>
+
                                 <div class="hidden-day-inputs" data-animal-index="{{ $index }}">
                                     @foreach($animalDayMeals as $dateKey => $recMap)
                                         @if(is_array($recMap))
@@ -702,6 +928,21 @@
 </div>
 
 <style>
+.delivery-address-box {
+    border: 1px solid #e6e1f7;
+    border-radius: 12px;
+    padding: 14px 14px 2px;
+    background: #fbfaff;
+}
+.other-addresses {
+    border-top: 1px dashed #ddd6f5;
+    padding: 10px 0 12px;
+}
+.other-address-item {
+    padding: 3px 0;
+    color: #444;
+}
+
 .animal-card { border-radius: 10px; }
 .animal-avatar {
     width: 32px;
@@ -795,6 +1036,31 @@
 .cal-day.has-meals {
     background: linear-gradient(135deg, rgba(108,92,231,0.18), rgba(255, 193, 7, 0.18));
     border-color: rgba(108,92,231,0.45);
+}
+.cal-day { position: relative; }
+.cal-day.has-pack {
+    background: linear-gradient(135deg, rgba(36,155,151,0.20), rgba(36,155,151,0.08));
+    border-color: rgba(36,155,151,0.65);
+    cursor: help;
+}
+.cal-pack-badge {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: #fff;
+    background: #249B97;
+    border-radius: 999px;
+    padding: 0 5px;
+    line-height: 14px;
+}
+.pack-day-row {
+    padding: 6px 10px;
+    margin-bottom: 6px;
+    border-left: 3px solid #249B97;
+    background: rgba(36,155,151,0.06);
+    border-radius: 6px;
 }
 .cal-day.is-active {
     outline: 2px solid rgba(108,92,231,0.55);
@@ -1083,31 +1349,30 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    var zonesByProvince = @json(
-        $provinces->mapWithKeys(function($p){
-            return [$p->name => $p->zones->pluck('name')->values()];
-        })
-    );
+    /*
+    |--------------------------------------------------------------------------
+    | DELIVERY ADDRESS : PROVINCE -> ZONES (by id)
+    |--------------------------------------------------------------------------
+    */
 
-    var provinceSelect = document.getElementById('subscriber_province');
-    var zoneSelect = document.getElementById('subscriber_zone');
+    var zonesByProvince = @json($zonesByProvinceJs);
+    var provinceCodes = @json($provinceCodes);
+
+    var provinceSelect = document.getElementById('address_province_id');
+    var zoneSelect = document.getElementById('address_zone_id');
     var codeInput = document.getElementById('code');
     var isEditMode = @json($isEdit);
     var nextSequenceNumber = "{{ isset($nextSubscriptionCode) ? substr($nextSubscriptionCode, 3) : '00001' }}";
 
-    function updateSubscriptionCodeByProvince(province) {
+    function updateSubscriptionCodeByProvince(provinceId) {
         if (!codeInput || isEditMode) return;
-    
-        var provinceCode = '00';
-    
-        if (province && zonesByProvince[province] !== undefined) {
-            var provinceOptions = @json($provinceCodes);
-            provinceCode = provinceOptions[province] || '00';
-        }
-    
+
+        var provinceCode = (provinceId && provinceCodes[provinceId]) ? provinceCodes[provinceId] : '00';
+
         codeInput.value = 'C' + provinceCode + nextSequenceNumber;
     }
-    function populateZonesForProvince(province, selectedZone) {
+
+    function populateZonesForProvince(provinceId, selectedZoneId) {
         if (!zoneSelect) return;
 
         zoneSelect.innerHTML = '';
@@ -1116,16 +1381,18 @@ document.addEventListener('DOMContentLoaded', function () {
         placeholder.textContent = 'Select zone';
         zoneSelect.appendChild(placeholder);
 
-        if (!province || !zonesByProvince[province]) {
+        var zones = provinceId ? zonesByProvince[provinceId] : null;
+
+        if (!zones) {
             zoneSelect.value = '';
             return;
         }
 
-        zonesByProvince[province].forEach(function (zone) {
+        zones.forEach(function (zone) {
             var opt = document.createElement('option');
-            opt.value = zone;
-            opt.textContent = zone;
-            if (selectedZone && selectedZone === zone) opt.selected = true;
+            opt.value = String(zone.id);
+            opt.textContent = zone.name + (zone.name_ar ? ' — ' + zone.name_ar : '');
+            if (selectedZoneId && String(selectedZoneId) === String(zone.id)) opt.selected = true;
             zoneSelect.appendChild(opt);
         });
     }
@@ -1170,14 +1437,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var state = {
         offsets: {},
-        dayMeals: {}
+        dayMeals: {},
+        packDays: {}
     };
+
+    /*
+     * Pack days sent by PHP. After a validation error, old() data
+     * has no pack_days: they are taken from the saved animal (same id).
+     */
+    var savedPackDays = @json($savedPackDaysByAnimal);
 
     animalsData.forEach(function(a, idx){
         state.offsets[idx] = 0;
         var m = a && a.day_meals ? a.day_meals : {};
         state.dayMeals[idx] = (m && typeof m === 'object') ? m : {};
+
+        var p = (a && a.pack_days) ? a.pack_days : ((a && a.id && savedPackDays[a.id]) ? savedPackDays[a.id] : {});
+        state.packDays[idx] = (p && typeof p === 'object' && !Array.isArray(p)) ? p : {};
     });
+
+    function getPackDay(animalIndex, dateYmd){
+        var days = state.packDays[animalIndex] || {};
+        return days[dateYmd] || null;
+    }
 
     function getTotalForDate(animalIndex, dateYmd){
         var map = state.dayMeals[animalIndex] && state.dayMeals[animalIndex][dateYmd] ? state.dayMeals[animalIndex][dateYmd] : {};
@@ -1212,7 +1494,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             var el = document.createElement('div');
             var isSunday = d.getDay() === 0;
-            el.className = 'cal-day' + (total > 0 ? ' has-meals' : '') + (isSunday ? ' is-sunday-disabled' : '');
+            var pack = getPackDay(animalIndex, ymd);
+            el.className = 'cal-day' + (total > 0 ? ' has-meals' : '') + (pack ? ' has-pack' : '') + (isSunday ? ' is-sunday-disabled' : '');
             el.setAttribute('data-date', ymd);
             el.setAttribute('data-animal-index', animalIndex);
             el.setAttribute('data-day-index', String(d.getDay()));
@@ -1222,12 +1505,48 @@ document.addEventListener('DOMContentLoaded', function () {
 
             el.innerHTML = '<div class="cal-dow">' + dowShort(d) + '</div>' +
                            '<div class="cal-num">' + d.getDate() + '</div>' +
-                           '<div class="cal-mon">' + monShort(d) + '</div>';
+                           '<div class="cal-mon">' + monShort(d) + '</div>' +
+                           (pack ? '<span class="cal-pack-badge">' + pack.total + '</span>' : '');
+
+            if (pack) {
+                el.setAttribute('title', 'Pack delivery ' + (pack.reference || '') + ' · ' + pack.total + ' meals (managed in Purchases)');
+            }
 
             grid.appendChild(el);
         }
 
         renderSelectedDaysList(animalIndex);
+        renderPackDaysList(animalIndex);
+    }
+
+    /*
+     * Read-only list of pack deliveries under the calendar.
+     */
+    function renderPackDaysList(animalIndex){
+        var list = document.querySelector('.pack-days-list[data-animal-index="' + animalIndex + '"]');
+        if (!list) return;
+
+        var days = state.packDays[animalIndex] || {};
+        var dates = Object.keys(days).sort();
+
+        var wrap = list.closest('.pack-days-wrap');
+        if (wrap) wrap.style.display = dates.length ? '' : 'none';
+
+        var purchaseUrl = @json(url('/purchases')) + '/';
+
+        list.innerHTML = dates.map(function(dateKey){
+            var p = days[dateKey];
+            var items = (p.items || []).map(function(it){ return it.qty + ' × ' + it.name; }).join(', ');
+
+            return '<div class="pack-day-row">' +
+                '<div><strong>' + dateKey + '</strong>' +
+                (p.slot ? ' <span class="text-muted">' + p.slot + '</span>' : '') +
+                ' <span class="badge bg-info text-dark">' + (p.status || '') + '</span></div>' +
+                '<div class="small text-muted">' + items + '</div>' +
+                '<a class="small" target="_blank" href="' + purchaseUrl + p.purchase_id + '">' +
+                (p.reference || '') + ' · ' + (p.product || '') + ' · #' + (p.number || '') + '</a>' +
+                '</div>';
+        }).join('');
     }
 
     function renderSelectedDaysList(animalIndex){
@@ -1536,6 +1855,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            var packDay = getPackDay(idx2, date);
+            if (packDay) {
+                alert('This day is a delivery of the pack ' + (packDay.reference || '') +
+                      ' (' + packDay.total + ' meals).\nIt is managed by the customer in the app or in the Purchases menu, not in this calendar.');
+                return;
+            }
+
             current.animalIndex = idx2;
             current.date = date;
 
@@ -1732,6 +2058,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         state.offsets[newIndex] = 0;
         state.dayMeals[newIndex] = {};
+        state.packDays[newIndex] = {};
 
         var newAnimalHtml = `
             <div class="col-12 col-md-4">
