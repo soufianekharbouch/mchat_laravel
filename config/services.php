@@ -186,7 +186,7 @@ return [
 
         // Deliveries before this day are never notified (empty = JAAK_START_DATE)
         'start_date' => env('ORDER_NOTIFICATIONS_START_DATE'),
-    ],
+    ], 
 
     /*
     |--------------------------------------------------------------------------
