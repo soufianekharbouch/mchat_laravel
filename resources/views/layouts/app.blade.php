@@ -482,6 +482,8 @@
                     @php
                         // PREMIUM-... purchases untreated
                         $premiumPendingCount = \App\Support\PremiumPack::pendingCount();
+                        // New purchases from the mobile app, not opened yet
+                        $appNewPurchases = \App\Support\AppPurchaseAlerts::count();
                     @endphp
 
                     <li class="nav-item">
@@ -492,13 +494,19 @@
                                     ? 'active'
                                     : ''
                             }}"
-                            href="{{ $premiumPendingCount > 0 ? route('purchases.index', ['premium' => 'pending']) : route('purchases.index') }}"
+                            href="{{ $appNewPurchases > 0 ? route('purchases.index', ['new_app' => 1]) : ($premiumPendingCount > 0 ? route('purchases.index', ['premium' => 'pending']) : route('purchases.index')) }}"
                         >
                             <i class="fas fa-shopping-cart me-2"></i>
                             Purchases
 
+                            @if($appNewPurchases > 0)
+                                <span class="badge rounded-pill bg-danger ms-auto" title="New purchases from the app">
+                                    <i class="fas fa-mobile-alt me-1"></i>{{ $appNewPurchases }}
+                                </span>
+                            @endif
+
                             @if($premiumPendingCount > 0)
-                                <span class="badge rounded-pill bg-warning text-dark ms-auto" title="Premium purchases untreated">
+                                <span class="badge rounded-pill bg-warning text-dark {{ $appNewPurchases > 0 ? 'ms-1' : 'ms-auto' }}" title="Premium purchases untreated">
                                     <i class="fas fa-crown me-1"></i>{{ $premiumPendingCount }}
                                 </span>
                             @endif
@@ -720,6 +728,30 @@
 
 
 
+
+                {{-- Notifications (automatic + manual) --}}
+                @if($authenticatedUser->hasPermission('notifications.view'))
+                    @php
+                        try {
+                            $notificationsFailedCount = \App\Models\MobileNotification::query()
+                                ->where('status', 'failed')
+                                ->where('updated_at', '>=', now()->subDays(7))
+                                ->count();
+                        } catch (\Throwable $exception) {
+                            $notificationsFailedCount = 0;
+                        }
+                    @endphp
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('notifications.*', 'notification-types.*') ? 'active' : '' }}"
+                           href="{{ route('notifications.index') }}">
+                            <i class="fas fa-bell me-2"></i>
+                            Notifications
+                            @if($notificationsFailedCount > 0)
+                                <span class="badge bg-danger rounded-pill float-end" title="Failed (7 days)">{{ $notificationsFailedCount }}</span>
+                            @endif
+                        </a>
+                    </li>
+                @endif
 
                 {{-- Support Tickets --}}
                 @if($authenticatedUser->hasPermission('support_tickets.view'))

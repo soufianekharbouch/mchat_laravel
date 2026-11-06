@@ -38,6 +38,7 @@ class PurchaseController extends Controller
             'date_from' => (string) $request->query('date_from', ''),
             'date_to' => (string) $request->query('date_to', ''),
             'premium' => (string) $request->query('premium', ''), // pending | done | all
+            'new_app' => (string) $request->query('new_app', ''), // 1 = new app purchases not seen
         ];
 
         $query = Purchase::query()
@@ -70,7 +71,10 @@ class PurchaseController extends Controller
             ->when(in_array($filters['premium'], ['pending', 'done'], true),
                 fn ($query) => $query->where('premium_status', $filters['premium']))
             ->when($filters['premium'] === 'all',
-                fn ($query) => $query->whereNotNull('premium_status'));
+                fn ($query) => $query->whereNotNull('premium_status'))
+            // New purchases from the app, not opened yet
+            ->when($filters['new_app'] === '1' && \App\Support\AppPurchaseAlerts::ready(),
+                fn ($query) => \App\Support\AppPurchaseAlerts::unseen($query));
 
         /*
          * Counters per status (with the other filters applied).
@@ -94,7 +98,20 @@ class PurchaseController extends Controller
 
         $premiumPendingCount = \App\Support\PremiumPack::pendingCount();
 
-        return view('purchases.index', compact('purchases', 'filters', 'statusCounts', 'products', 'premiumPendingCount'));
+        // New purchases from the app (banner, chip, NEW badge)
+        $appNewCount = \App\Support\AppPurchaseAlerts::count();
+
+        return view('purchases.index', compact('purchases', 'filters', 'statusCounts', 'products', 'premiumPendingCount', 'appNewCount'));
+    }
+
+    /** "Mark all as seen": the new app purchases stop alerting. */
+    public function markAppSeen(): \Illuminate\Http\RedirectResponse
+    {
+        $this->authorizePermission('purchases.view');
+
+        $count = \App\Support\AppPurchaseAlerts::markAllSeen();
+
+        return redirect()->route('purchases.index')->with('success', "{$count} app purchase(s) marked as seen.");
     }
 
     /*
@@ -257,7 +274,25 @@ class PurchaseController extends Controller
             ->where('status', '!=', 'cancelled')
             ->sum(fn ($delivery) => $delivery->items->sum('quantity'));
 
-        return view('purchases.show', compact('purchase', 'scheduledRecipes'));
+        // New app purchase opened: seen (no more alert)
+        $wasNew = \App\Support\AppPurchaseAlerts::isNew($purchase);
+        \App\Support\AppPurchaseAlerts::markSeen($purchase);
+
+        // Online payments (Hesabe) of this pack: attempts, result, references
+        $onlinePayments = collect();
+
+        try {
+            if (class_exists(\App\Models\PaymentTransaction::class) && \Illuminate\Support\Facades\Schema::hasTable('payment_transactions')) {
+                $onlinePayments = \App\Models\PaymentTransaction::query()
+                    ->whereJsonContains('purchase_ids', $purchase->id)
+                    ->orderByDesc('id')
+                    ->get();
+            }
+        } catch (\Throwable) {
+            $onlinePayments = collect();
+        }
+
+        return view('purchases.show', compact('purchase', 'scheduledRecipes', 'onlinePayments', 'wasNew'));
     }
 
     /*

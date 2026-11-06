@@ -34,6 +34,21 @@
     </div>
 @endif
 
+{{-- NEW PURCHASES FROM THE APP (not opened yet) --}}
+@if($appNewCount > 0 && $filters['new_app'] !== '1')
+    <div class="alert alert-info d-flex align-items-center gap-2 py-2">
+        <i class="fas fa-mobile-alt"></i>
+        <a href="{{ route('purchases.index', ['new_app' => 1]) }}" class="text-decoration-none text-reset flex-grow-1">
+            <b>{{ $appNewCount }}</b> new purchase(s) from the mobile app.
+            <span class="fw-semibold ms-1">View <i class="fas fa-arrow-right ms-1"></i></span>
+        </a>
+        <form method="POST" action="{{ route('purchases.app-seen') }}" class="m-0">
+            @csrf
+            <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-check-double me-1"></i>Mark all as seen</button>
+        </form>
+    </div>
+@endif
+
 {{-- PREMIUM-... packs to treat --}}
 @if($premiumPendingCount > 0 && $filters['premium'] !== 'pending')
     <a href="{{ route('purchases.index', ['premium' => 'pending']) }}"
@@ -61,6 +76,12 @@
 
     <span class="vr mx-1"></span>
 
+    <a href="{{ route('purchases.index', array_merge(array_filter($filters, fn ($v) => $v !== ''), ['new_app' => $filters['new_app'] === '1' ? '' : '1'])) }}"
+       class="btn btn-sm {{ $filters['new_app'] === '1' ? 'btn-info' : 'btn-outline-info' }}">
+        <i class="fas fa-mobile-alt me-1"></i>New from app
+        <span class="badge bg-danger ms-1">{{ $appNewCount }}</span>
+    </a>
+
     <a href="{{ route('purchases.index', array_merge(array_filter($filters, fn ($v) => $v !== ''), ['premium' => $filters['premium'] === 'pending' ? '' : 'pending'])) }}"
        class="btn btn-sm {{ $filters['premium'] === 'pending' ? 'btn-warning' : 'btn-outline-warning' }}">
         <i class="fas fa-crown me-1"></i>Premium untreated
@@ -79,6 +100,7 @@
         <form method="GET" action="{{ route('purchases.index') }}" class="row g-2 align-items-end">
             <input type="hidden" name="status" value="{{ $filters['status'] }}">
             <input type="hidden" name="premium" value="{{ $filters['premium'] }}">
+            <input type="hidden" name="new_app" value="{{ $filters['new_app'] }}">
 
             <div class="col-md-3">
                 <label class="form-label small mb-1">Search</label>
@@ -166,8 +188,14 @@
                 </thead>
                 <tbody>
                     @forelse($purchases as $purchase)
-                        <tr class="purchase-row {{ $purchase->premium_status === 'pending' ? 'premium-pending' : '' }}" onclick="window.location='{{ route('purchases.show', $purchase) }}'">
-                            <td class="fw-semibold text-nowrap">{{ $purchase->reference }}</td>
+                        @php $isNewApp = \App\Support\AppPurchaseAlerts::isNew($purchase); @endphp
+                        <tr class="purchase-row {{ $purchase->premium_status === 'pending' ? 'premium-pending' : '' }} {{ $isNewApp ? 'app-new' : '' }}" onclick="window.location='{{ route('purchases.show', $purchase) }}'">
+                            <td class="fw-semibold text-nowrap">
+                                {{ $purchase->reference }}
+                                @if($isNewApp)
+                                    <span class="badge bg-danger ms-1">NEW</span>
+                                @endif
+                            </td>
 
                             <td class="text-nowrap small">
                                 {{ $purchase->purchased_at?->format('d/m/Y') }}
@@ -224,7 +252,14 @@
                                 @endif
                             </td>
 
-                            <td class="small">{{ $purchase->source_label }}</td>
+                            <td class="small text-nowrap">
+                                @if($purchase->source === 'app')
+                                    <i class="fas fa-mobile-alt text-info me-1"></i>
+                                @elseif($purchase->source === 'shopify')
+                                    <i class="fab fa-shopify text-success me-1"></i>
+                                @endif
+                                {{ $purchase->source_label }}
+                            </td>
 
                             <td>
                                 <span class="badge bg-{{ \App\Models\Purchase::statusColor($purchase->status) }}">
@@ -258,6 +293,7 @@
 .purchase-row { cursor: pointer; }
 .purchase-row:hover { background-color: rgba(108, 92, 231, 0.06); }
 .purchase-row.premium-pending > td { background-color: #fff8e5 !important; }
+.purchase-row.app-new > td { background-color: #eaf6fb !important; }
 .purchase-row.premium-pending > td:first-child { box-shadow: inset 4px 0 0 #f0ad4e; }
 </style>
 @endsection

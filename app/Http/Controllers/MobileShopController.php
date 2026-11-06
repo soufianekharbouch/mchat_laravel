@@ -9,6 +9,8 @@ use App\Models\CustomerAddress;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Zone;
+use App\Services\AppPurchaseAutoPlanner;
+use App\Services\OnlinePaymentService;
 use App\Services\PetLoyaltyService;
 use App\Support\CustomerSession;
 use App\Support\ProductPricing;
@@ -40,6 +42,11 @@ use Throwable;
  *     first pack (50 min, 150 max, never more than the price)
  *   - then the purchase itself (MobilePurchaseController::store:
  *     same rules, promo / trial offer prices, limits)
+ *   - payment:
+ *     PAYMENT_GATEWAY=hesabe -> packs "pending" + Hesabe payment page URL
+ *       (payment.url): the app opens it, the packs become "paid" when
+ *       Hesabe confirms (HesabePaymentController / OnlinePaymentService)
+ *     PAYMENT_GATEWAY empty  -> SIMULATION (card_paid: paid at once)
  */
 class MobileShopController extends Controller
 {
@@ -65,7 +72,7 @@ class MobileShopController extends Controller
          */
         $all = ShopCatalog::arrange(
             ShopCatalog::onlyShopCodes(Product::query()->active())
-                ->with('recipes')
+                ->with(['recipes', 'media'])
                 ->ordered()
                 ->get(),
             ShopCatalog::historyFor($customer)
@@ -77,7 +84,7 @@ class MobileShopController extends Controller
          * (e.g. a taste pack for his other, non premium, pet).
          */
         if ($request->filled('include_product_id') && !$all->contains('id', (int) $request->input('include_product_id'))) {
-            $extra = Product::query()->active()->with('recipes')->find((int) $request->input('include_product_id'));
+            $extra = Product::query()->active()->with(['recipes', 'media'])->find((int) $request->input('include_product_id'));
 
             if ($extra && ShopCatalog::isShopCode($extra->code)) {
                 $all = $all->push($extra)->values();
@@ -103,6 +110,8 @@ class MobileShopController extends Controller
             ],
             'pets' => $pets->map(fn (Animal $animal) => $this->formatPet($animal, $lang))->values(),
             'has_address' => $customer ? $customer->addresses()->exists() : false,
+            // hesabe = real payment page | simulation = test card sheet
+            'payment_gateway' => self::paymentGateway(),
             // Shop: card payment only (KNET, Visa / Mastercard)
             'payment_methods' => collect(MobilePurchaseController::CARD_PAYMENT_METHODS)->map(fn ($method) => [
                 'value' => $method,
@@ -115,6 +124,7 @@ class MobileShopController extends Controller
             'max_packs_per_pet' => self::MAX_PACKS_PER_PET,
             // Loyalty points (per pet: see pets[].loyalty)
             'loyalty_program' => $this->loyaltyProgram(),
+            'whatsapp_number' => self::whatsappNumber(),
         ]);
     }
 
@@ -132,7 +142,7 @@ class MobileShopController extends Controller
         $customer = CustomerSession::fromRequest($request);
         $pets = $customer ? $this->customerPets($customer) : collect();
 
-        $product->loadMissing('recipes');
+        $product->loadMissing(['recipes', 'media']);
 
         return response()->json([
             'success' => true,
@@ -140,7 +150,17 @@ class MobileShopController extends Controller
             'product' => $this->formatProduct($product, $lang, $pets),
             'pets' => $pets->map(fn (Animal $animal) => $this->formatPet($animal, $lang))->values(),
             'has_address' => $customer ? $customer->addresses()->exists() : false,
+            // "Any question? WhatsApp" button of the product page
+            'whatsapp_number' => self::whatsappNumber(),
         ]);
+    }
+
+    /** Number of the WhatsApp button (SHOP_WHATSAPP_NUMBER, digits only). */
+    public static function whatsappNumber(): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) config('services.shop_contact.whatsapp'));
+
+        return $digits !== '' ? $digits : null;
     }
 
     /*
@@ -442,8 +462,55 @@ class MobileShopController extends Controller
             }
         }
 
+        /*
+         * 5 bis. Real online payment (Hesabe): the packs stay "pending",
+         *        the app opens the Hesabe page. Page not available: the
+         *        order is cancelled (no pack left waiting for nothing).
+         */
+        $payment = null;
+
+        if (!$paid && OnlinePaymentService::enabled()) {
+            try {
+                $started = app(OnlinePaymentService::class)->start(
+                    $customer,
+                    collect($purchases),
+                    $request->input('payment_method')
+                );
+
+                $paid = $started['paid'];
+                $payment = [
+                    'required' => !$started['paid'],
+                    'gateway' => 'hesabe',
+                    'url' => $started['payment_url'],
+                    'transaction_id' => $started['transaction']->id,
+                    'reference' => $started['transaction']->order_reference,
+                    'amount' => (float) $started['transaction']->amount,
+                ];
+            } catch (Throwable $exception) {
+                report($exception);
+                $this->rollbackOrder($purchases, $createdPets);
+
+                return $this->error(
+                    $exception->getMessage() === 'min_amount'
+                        ? ($lang === 'ar' ? 'المبلغ أقل من الحد الأدنى للدفع (0.200 د.ك).' : 'The amount is below the minimum online payment (0.200 KWD).')
+                        : ($lang === 'ar' ? 'تعذر فتح صفحة الدفع. حاول مرة أخرى.' : 'Unable to open the payment page. Please try again.'),
+                    503
+                );
+            }
+        }
+
         $purchases = collect($purchases)->map->fresh();
         $first = $purchases->first();
+
+        // Paid with the test sheet: deliveries planned automatically
+        // (with Hesabe it is done when the payment is confirmed)
+        if ($paid && !$payment) {
+            try {
+                app(AppPurchaseAutoPlanner::class)->planPaid($purchases);
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        }
 
         // Paid: points earned by each pack (recalculated now)
         if ($paid) {
@@ -459,9 +526,14 @@ class MobileShopController extends Controller
         return response()->json([
             'success' => true,
             'paid' => $paid,
-            'message' => $paid
+            // Test sheet (no real money) / Hesabe page to open
+            'simulated' => $paid && !$payment && MobilePurchaseController::simulationEnabled(),
+            'payment' => $payment,
+            'message' => $payment && !$paid
+                ? ($lang === 'ar' ? 'أكمل الدفع في الصفحة الآمنة.' : 'Complete the payment on the secure page.')
+                : ($paid
                 ? ($lang === 'ar' ? 'تم الدفع بنجاح.' : 'Payment successful.')
-                : ($lang === 'ar' ? 'تم تسجيل طلبك.' : 'Your order is registered.'),
+                : ($lang === 'ar' ? 'تم تسجيل طلبك.' : 'Your order is registered.')),
 
             // First purchase (old app versions)
             'purchase' => ['id' => $first->id, 'status' => $first->status, 'reference' => $first->reference],
@@ -479,6 +551,8 @@ class MobileShopController extends Controller
                 'unit_price' => (float) $p->unit_price,
                 'discount_amount' => (float) $p->discount_amount,
                 'total_amount' => (float) $p->total_amount,
+                // Planned automatically after the payment (null = to plan)
+                'first_delivery' => AppPurchaseAutoPlanner::firstDelivery($p),
                 'loyalty' => $loyaltyOf($p),
             ])->values(),
             'pets_count' => count($lines),
@@ -501,6 +575,16 @@ class MobileShopController extends Controller
     | SHOP_MULTI_PET_DISCOUNT_TRIAL=true.
     |
     */
+
+    /** hesabe | simulation | none (shown to the app) */
+    public static function paymentGateway(): string
+    {
+        if (OnlinePaymentService::enabled()) {
+            return 'hesabe';
+        }
+
+        return MobilePurchaseController::simulationEnabled() ? 'simulation' : 'none';
+    }
 
     public const MAX_PETS = 6;
     public const MAX_PACKS_PER_PET = 3;
@@ -532,6 +616,11 @@ class MobileShopController extends Controller
     {
         foreach ($purchases as $purchase) {
             try {
+                // Points reserved on this pack given back
+                if (\Illuminate\Support\Facades\Schema::hasTable('loyalty_redemptions')) {
+                    DB::table('loyalty_redemptions')->where('purchase_id', $purchase->id)->delete();
+                }
+
                 DB::table('purchase_status_histories')->where('purchase_id', $purchase->id)->delete();
                 $purchase->delete();
             } catch (Throwable $exception) {
@@ -642,8 +731,11 @@ class MobileShopController extends Controller
             'id' => $product->id,
             'code' => $product->code,
             'name' => $product->localizedName($lang),
+            'subtitle' => $product->localizedSubtitle($lang),
             'description' => $product->localizedDescription($lang),
             'image_url' => $product->image_url,
+            // Carousel: main image, then the gallery (images + videos)
+            'media' => $product->galleryForApi(),
 
             'species' => $product->species,
             'breed_size_category' => $product->breed_size_category,
@@ -675,6 +767,17 @@ class MobileShopController extends Controller
 
             'duration_label' => $product->durationLabel($lang),
             'total_recipes' => $product->total_recipes,
+
+            // Product page: badge "5 bags", bag weight, free delivery,
+            // qualities and "what's inside the pack"
+            'bags_count' => $product->bagsCount(),
+            'bag_weight_grams' => $product->bag_weight_grams,
+            'free_delivery' => (bool) ($product->free_delivery ?? true),
+            'features' => collect($product->featuresList())->map(fn ($key) => [
+                'key' => $key,
+                'label' => Product::FEATURES[$key][$lang === 'ar' ? 'ar' : 'en'],
+            ])->values(),
+            'contents' => $product->contentsForApi($lang),
             'rules' => [
                 'min_deliveries' => $product->min_deliveries,
                 'max_deliveries' => $product->max_deliveries,

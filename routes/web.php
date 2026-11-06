@@ -3,8 +3,9 @@
 use App\Http\Controllers\AppCommunicationController;
 use App\Http\Controllers\AppCommunicationCustomerActivityController;
 use App\Http\Controllers\AppCommunicationCustomerController;
-use App\Http\Controllers\AppNotificationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NotificationTypeController;
 use App\Http\Controllers\AutoSubscriptionController;
 use App\Http\Controllers\OrdersController;
 use App\Http\Controllers\SubscriptionDetailsController;
@@ -34,7 +35,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Route;
-
 /*
 |--------------------------------------------------------------------------
 | Initialisation des comptes clients
@@ -179,7 +179,6 @@ Route::get('/', function (Request $request) {
     return redirect()->route('login');
 
 })->name('home');
-
 /*
 |--------------------------------------------------------------------------
 | API du portail client Shopify App Proxy
@@ -298,6 +297,14 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/products/{product}/toggle-active', [ProductController::class, 'toggleActive'])
         ->name('products.toggle-active');
 
+    // Media library of the product form: upload one file (image / video)
+    Route::post('/products-media/upload', [ProductController::class, 'uploadMedia'])
+        ->name('products.media.upload');
+
+    // Copy of a product (inactive, -COPY code). PUT accepted: button of the edit form
+    Route::match(['post', 'put'], '/products/{product}/duplicate', [ProductController::class, 'duplicate'])
+        ->name('products.duplicate');
+
     /*
     |--------------------------------------------------------------------------
     | ACHATS (purchases)
@@ -312,6 +319,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/purchases/{purchase}/status', [PurchaseController::class, 'updateStatus'])
         ->name('purchases.status');
+
+    // New purchases from the app: "Mark all as seen"
+    Route::post('/purchases-app-seen', [PurchaseController::class, 'markAppSeen'])
+        ->name('purchases.app-seen');
 
     // PREMIUM-... pack: assign the custom product of the customer
     Route::post('/purchases/{purchase}/premium-product', [\App\Http\Controllers\PurchasePremiumController::class, 'assignProduct'])
@@ -574,20 +585,77 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/app-communications/activities', [AppCommunicationCustomerActivityController::class, 'index'])
         ->name('app-communications.activities.index');
 
-    Route::get('/app-communications/notifications', [AppNotificationController::class, 'index'])
+    // Old notification pages: moved to the "Notifications" menu
+    Route::get('/app-communications/notifications', fn (\Illuminate\Http\Request $request) => redirect()->route('notifications.index', $request->query()))
         ->name('app-communications.notifications.index');
 
-    Route::get('/app-communications/notifications/create', [AppNotificationController::class, 'create'])
+    Route::get('/app-communications/notifications/create', fn (\Illuminate\Http\Request $request) => redirect()->route('notifications.create', $request->query()))
         ->name('app-communications.notifications.create');
 
-    Route::post('/app-communications/notifications', [AppNotificationController::class, 'store'])
+    Route::post('/app-communications/notifications', fn () => redirect()->route('notifications.create'))
         ->name('app-communications.notifications.store');
 
-    Route::post('/app-communications/notifications/{notification}/send', [AppNotificationController::class, 'send'])
+    Route::post('/app-communications/notifications/{notification}/send', fn ($notification) => redirect()->route('notifications.show', $notification))
         ->name('app-communications.notifications.send');
 
-    Route::get('/app-communications/notifications/{notification}', [AppNotificationController::class, 'show'])
+    Route::get('/app-communications/notifications/{notification}', fn ($notification) => redirect()->route('notifications.show', $notification))
         ->name('app-communications.notifications.show');
+
+    /*
+    |--------------------------------------------------------------------------
+    | NOTIFICATIONS (automatic + manual, scheduled)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/notifications', [NotificationController::class, 'index'])
+        ->name('notifications.index');
+
+    Route::get('/notifications/create', [NotificationController::class, 'create'])
+        ->name('notifications.create');
+
+    Route::post('/notifications', [NotificationController::class, 'store'])
+        ->name('notifications.store');
+
+    Route::get('/notifications-customers', [NotificationController::class, 'customers'])
+        ->name('notifications.customers');
+
+    Route::get('/notifications/{notification}', [NotificationController::class, 'show'])
+        ->whereNumber('notification')
+        ->name('notifications.show');
+
+    Route::get('/notifications/{notification}/edit', [NotificationController::class, 'edit'])
+        ->whereNumber('notification')
+        ->name('notifications.edit');
+
+    Route::put('/notifications/{notification}', [NotificationController::class, 'update'])
+        ->whereNumber('notification')
+        ->name('notifications.update');
+
+    Route::post('/notifications/{notification}/cancel', [NotificationController::class, 'cancel'])
+        ->whereNumber('notification')
+        ->name('notifications.cancel');
+
+    Route::post('/notifications/{notification}/restore', [NotificationController::class, 'restore'])
+        ->whereNumber('notification')
+        ->name('notifications.restore');
+
+    Route::post('/notifications/{notification}/send-now', [NotificationController::class, 'sendNow'])
+        ->whereNumber('notification')
+        ->name('notifications.send-now');
+
+    Route::delete('/notifications/{notification}/recipients/{recipient}', [NotificationController::class, 'removeRecipient'])
+        ->whereNumber('notification')
+        ->name('notifications.recipients.destroy');
+
+    Route::get('/notification-types', [NotificationTypeController::class, 'index'])
+        ->name('notification-types.index');
+
+    Route::put('/notification-types/{key}', [NotificationTypeController::class, 'update'])
+        ->where('key', '[a-z0-9_]+')
+        ->name('notification-types.update');
+
+    Route::post('/notification-types/plan-reminders', [NotificationTypeController::class, 'planReminders'])
+        ->name('notification-types.plan-reminders');
 
     /*
     |--------------------------------------------------------------------------

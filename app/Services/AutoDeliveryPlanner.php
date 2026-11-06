@@ -22,6 +22,12 @@ use Illuminate\Validation\ValidationException;
  *  - next pack      : $firstDate = day after the last meals of the
  *                     previous pack (several packs for the same pet)
  *
+ * App purchases (planned automatically after the payment):
+ *  - $template : distribution of a similar previous pack (same deliveries,
+ *                same recipes) -> see templateFrom()
+ *  - $staffRules: first delivery = the day after the order, even after 18:00
+ *                (order 02/11 23:00 -> 03/11, order 03/11 00:30 -> 04/11)
+ *
  * Saved with PurchaseScheduleService (same rules as the app), so the
  * customer (app) and the staff can still change it afterwards.
  */
@@ -52,15 +58,29 @@ class AutoDeliveryPlanner
         ?int $addressId = null,
         string $changedByType = 'shopify',
         ?Carbon $firstDate = null,
-        ?string $slot = null
+        ?string $slot = null,
+        ?array $template = null,
+        bool $staffRules = false
     ): array {
+        // PREMIUM-... untreated: nothing planned before the custom product
+        if (\App\Support\PremiumPack::isPending($purchase)) {
+            return [
+                'ok' => false,
+                'message' => 'PREMIUM pack: untreated. Contact the customer, assign his custom product (purchase page), then he plans his deliveries.',
+                'next_start' => null,
+            ];
+        }
+
         $allowed = $this->schedule->allowedRecipes($purchase);
 
         if ($allowed->isEmpty()) {
             return ['ok' => false, 'message' => 'The pack has no recipe: deliveries not planned.', 'next_start' => null];
         }
 
-        $quantities = $this->splitQuantities($purchase);
+        // Distribution of a similar previous pack (validated by templateFrom)
+        $quantities = $template
+            ? array_map(fn (array $row) => (int) array_sum($row), $template)
+            : $this->splitQuantities($purchase);
 
         if (!$quantities) {
             return [
@@ -72,7 +92,9 @@ class AutoDeliveryPlanner
             ];
         }
 
-        $recipeRows = $this->shareRecipes($allowed, $quantities);
+        $recipeRows = $template && $this->recipesFit($allowed, $template)
+            ? $template
+            : $this->shareRecipes($allowed, $quantities);
 
         if (!$recipeRows) {
             return ['ok' => false, 'message' => 'Not enough recipes in the pack for the automatic planning (max per recipe).', 'next_start' => null];
@@ -83,7 +105,7 @@ class AutoDeliveryPlanner
         $start = $firstDate
             ? $firstDate->copy()->startOfDay()
             : $orderDate->copy()->startOfDay()->addDays(self::firstDeliveryAfterDays());
-        $earliest = $this->schedule->earliestDeliveryDate();
+        $earliest = $this->schedule->earliestDeliveryDate($staffRules);
 
         if ($start->lt($earliest)) {
             $start = $earliest->copy();
@@ -148,6 +170,105 @@ class AutoDeliveryPlanner
         }
 
         return ['ok' => false, 'message' => 'Automatic planning failed: ' . $lastError, 'next_start' => null];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SAME DISTRIBUTION AS A SIMILAR PREVIOUS PACK
+    |--------------------------------------------------------------------------
+    |
+    | Previous pack of the same pet (then of the same customer) with the same
+    | product, otherwise the same number of meals for this pet: its
+    | deliveries become the model [[recipe_id => qty], ...].
+    |  - recipes still in the pack     -> same recipes, same quantities
+    |  - other recipes (other age...)  -> same number of deliveries and
+    |                                     meals per delivery, recipes of
+    |                                     the new pack shared (plan())
+    | Refused when it does not fit the rules of the new pack.
+    |
+    */
+
+    /** @return array<int, array<int, int>>|null */
+    public function templateFrom(Purchase $purchase): ?array
+    {
+        $candidates = Purchase::query()
+            ->where('id', '!=', $purchase->id)
+            ->whereIn('status', ['paid', 'active', 'completed', 'expired'])
+            ->where(function ($q) use ($purchase) {
+                $q->where(fn ($same) => $same->where('product_code', $purchase->product_code)
+                    ->where(fn ($owner) => $owner
+                        ->where('animal_id', $purchase->animal_id)
+                        ->orWhere('customer_account_id', $purchase->customer_account_id)
+                        ->when($purchase->subscription_id, fn ($w) => $w->orWhere('subscription_id', $purchase->subscription_id))))
+                    ->orWhere(fn ($pet) => $pet->where('animal_id', $purchase->animal_id)
+                        ->where('total_recipes', $purchase->total_recipes));
+            })
+            ->orderByRaw('CASE WHEN product_code = ? AND animal_id = ? THEN 0 WHEN product_code = ? THEN 1 ELSE 2 END', [
+                $purchase->product_code,
+                (int) $purchase->animal_id,
+                $purchase->product_code,
+            ])
+            ->orderByDesc('id')
+            ->limit(6)
+            ->with(['deliveries' => fn ($q) => $q->where('status', '!=', 'cancelled')->orderBy('delivery_date'), 'deliveries.items'])
+            ->get();
+
+        foreach ($candidates as $previous) {
+            $rows = $previous->deliveries
+                ->map(fn ($delivery) => $delivery->items
+                    ->groupBy('recipe_id')
+                    ->map(fn ($items) => (int) $items->sum('quantity'))
+                    ->filter(fn ($qty) => $qty > 0)
+                    ->all())
+                ->filter()
+                ->values()
+                ->all();
+
+            if ($rows && $this->quantitiesFit($purchase, $rows)) {
+                return $rows;
+            }
+        }
+
+        return null;
+    }
+
+    /** Number of deliveries / meals per delivery / total of the new pack. */
+    private function quantitiesFit(Purchase $purchase, array $rows): bool
+    {
+        $count = count($rows);
+        $sums = array_map(fn ($row) => (int) array_sum($row), $rows);
+
+        return $count >= max(1, (int) $purchase->min_deliveries)
+            && $count <= max(1, (int) $purchase->max_deliveries)
+            && array_sum($sums) === (int) $purchase->total_recipes
+            && min($sums) >= max(1, (int) $purchase->min_recipes_per_delivery)
+            && max($sums) <= max(1, (int) $purchase->max_recipes_per_delivery);
+    }
+
+    /** Every recipe still in the pack, maximum of each recipe respected. */
+    private function recipesFit($allowed, array $rows): bool
+    {
+        $used = [];
+
+        foreach ($rows as $row) {
+            foreach ($row as $recipeId => $qty) {
+                if (!isset($allowed[$recipeId])) {
+                    return false;
+                }
+
+                $used[$recipeId] = ($used[$recipeId] ?? 0) + $qty;
+            }
+        }
+
+        foreach ($used as $recipeId => $qty) {
+            $max = $allowed[$recipeId]['max_quantity'];
+
+            if ($max !== null && $qty > $max) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

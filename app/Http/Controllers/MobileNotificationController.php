@@ -155,8 +155,12 @@ class MobileNotificationController extends Controller
                     'n.body_ar',
                     'n.created_at',
                     'n.sent_at',
+                    'n.type',
+                    'n.destination',
+                    'n.destination_params',
 
                     'r.viewed_at',
+                    'r.opened_at',
                     'r.dismissed_at',
                 ])
                 ->orderByDesc(
@@ -250,8 +254,32 @@ class MobileNotificationController extends Controller
                             'viewed_at' =>
                                 $row->viewed_at,
 
+                            'opened_at' =>
+                                $row->opened_at,
+
                             'dismissed_at' =>
                                 $row->dismissed_at,
+
+                            /*
+                             * Where the app goes when the
+                             * customer taps the notification.
+                             */
+
+                            'type' =>
+                                $row->type,
+
+                            'destination' =>
+                                $row->destination
+                                ?: 'notifications',
+
+                            'params' =>
+                                (object) (
+                                    json_decode(
+                                        (string) $row->destination_params,
+                                        true
+                                    )
+                                    ?: []
+                                ),
                         ];
                     }
                 );
@@ -847,6 +875,102 @@ public function markViewed(
         ], 500);
     }
 }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | MOBILE: MARK AS OPENED
+    |--------------------------------------------------------------------------
+    |
+    | POST /api/mobile/notifications/{notification}/open
+    |
+    | The customer tapped the notification (push or list) and the app
+    | opened its destination. Also marks it viewed.
+    |
+    */
+
+    public function markOpened(
+        Request $request,
+        int $notification
+    ): JsonResponse {
+        try {
+            $customerAccount =
+                $this->resolveCustomerAccount(
+                    $request
+                );
+
+            $deviceId = trim(
+                (string) $request->input(
+                    'device_id',
+                    ''
+                )
+            );
+
+            $device = $deviceId !== ''
+                ? DB::table('mobile_devices')
+                    ->where('device_id', $deviceId)
+                    ->first()
+                : null;
+
+            if (!$customerAccount && $device && !empty($device->customer_account_id)) {
+                $customerAccount = CustomerAccount::query()->find($device->customer_account_id);
+            }
+
+            if (!$customerAccount && !$device) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Device or customer not found.',
+                ], 404);
+            }
+
+            $query = DB::table('mobile_notification_recipients')
+                ->where('notification_id', $notification)
+                ->where(function ($q) use ($customerAccount, $device) {
+                    if ($customerAccount) {
+                        $q->orWhere('customer_account_id', $customerAccount->id);
+                    }
+
+                    if ($device) {
+                        $q->orWhere('mobile_device_id', $device->id);
+                    }
+                });
+
+            if (!(clone $query)->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Notification recipient not found.',
+                ], 404);
+            }
+
+            $now = now();
+
+            (clone $query)
+                ->whereNull('viewed_at')
+                ->update(['viewed_at' => $now, 'updated_at' => $now]);
+
+            (clone $query)
+                ->whereNull('opened_at')
+                ->update(['opened_at' => $now, 'updated_at' => $now]);
+
+            $row = DB::table('mobile_notifications')
+                ->where('id', $notification)
+                ->first(['destination', 'destination_params']);
+
+            return response()->json([
+                'success' => true,
+                'opened_at' => $now->toISOString(),
+                'destination' => $row?->destination ?: 'notifications',
+                'params' => (object) (json_decode((string) ($row?->destination_params ?? ''), true) ?: []),
+            ]);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to mark notification as opened.',
+            ], 500);
+        }
+    }
 
 
     /*

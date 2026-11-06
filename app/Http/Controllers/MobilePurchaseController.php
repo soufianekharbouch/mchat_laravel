@@ -8,6 +8,8 @@ use App\Models\CustomerAddress;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseDelivery;
+use App\Models\PaymentTransaction;
+use App\Services\OnlinePaymentService;
 use App\Services\PurchaseScheduleService;
 use App\Support\ProductPricing;
 use App\Support\PremiumPack;
@@ -410,6 +412,74 @@ class MobilePurchaseController extends Controller
             return $this->validationError($validator->errors()->first(), $validator->errors()->toArray());
         }
 
+        if (OnlinePaymentService::enabled() && in_array($purchase->status, ['paid', 'active', 'completed'], true)) {
+            return response()->json([
+                'success' => true,
+                'already_paid' => true,
+                'message' => $lang === 'ar' ? 'تم تأكيد الدفع بالفعل.' : 'The payment is already confirmed.',
+                'purchase' => $this->formatPurchaseDetail($purchase->fresh(), $customer, $lang),
+            ]);
+        }
+
+        /*
+         * REAL PAYMENT (Hesabe): payment page for this pack + the other packs
+         * of the same order still pending. The app opens payment_url.
+         */
+        if (OnlinePaymentService::enabled()) {
+            $pending = collect([$purchase]);
+
+            $last = PaymentTransaction::query()
+                ->where('customer_account_id', $customer->id)
+                ->whereJsonContains('purchase_ids', $purchase->id)
+                ->latest('id')
+                ->first();
+
+            if ($last) {
+                $payments = app(OnlinePaymentService::class);
+
+                // Paid in the meantime (customer closed the app before the end)
+                if ($payments->confirm($last)->isPaid()) {
+                    return response()->json([
+                        'success' => true,
+                        'already_paid' => true,
+                        'message' => $lang === 'ar' ? 'تم تأكيد الدفع بالفعل.' : 'The payment is already confirmed.',
+                        'purchase' => $this->formatPurchaseDetail($purchase->fresh(), $customer, $lang),
+                    ]);
+                }
+
+                $pending = $last->purchases()->where('status', 'pending')->values();
+
+                if ($pending->isEmpty()) {
+                    $pending = collect([$purchase]);
+                }
+            }
+
+            try {
+                $started = app(OnlinePaymentService::class)->start($customer, $pending, $request->input('payment_method'));
+            } catch (Throwable $exception) {
+                report($exception);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $lang === 'ar' ? 'تعذر فتح صفحة الدفع. حاول مرة أخرى.' : 'Unable to open the payment page. Please try again.',
+                ], 503);
+            }
+
+            return response()->json([
+                'success' => true,
+                'paid' => $started['paid'],
+                'payment' => [
+                    'required' => !$started['paid'],
+                    'gateway' => 'hesabe',
+                    'url' => $started['payment_url'],
+                    'transaction_id' => $started['transaction']->id,
+                    'reference' => $started['transaction']->order_reference,
+                    'amount' => (float) $started['transaction']->amount,
+                ],
+                'purchase' => $this->formatPurchaseDetail($purchase->fresh(), $customer, $lang),
+            ]);
+        }
+
         if (!self::simulationEnabled()) {
             return response()->json([
                 'success' => false,
@@ -430,6 +500,13 @@ class MobilePurchaseController extends Controller
 
         try {
             self::markCardPaid($purchase, $request->input('payment_method'), $request->input('card_last4'));
+
+            // Deliveries planned automatically (the customer can change them)
+            try {
+                app(\App\Services\AppPurchaseAutoPlanner::class)->planPaid([$purchase]);
+            } catch (Throwable $planError) {
+                report($planError);
+            }
         } catch (Throwable $exception) {
             Log::error('Simulated payment error', [
                 'purchase_id' => $purchase->id,
@@ -452,7 +529,8 @@ class MobilePurchaseController extends Controller
 
     /**
      * Card payment simulation: ON as long as no payment gateway is connected
-     * (services.payment.gateway empty). Once the KNET / card gateway is set,
+     * (services.payment.gateway empty = PAYMENT_GATEWAY not set in .env;
+     * PAYMENT_GATEWAY=hesabe -> real payment, simulation OFF). Once the KNET / card gateway is set,
      * the real payment is used and the simulation stops automatically.
      */
     public static function simulationEnabled(): bool
@@ -581,15 +659,67 @@ class MobilePurchaseController extends Controller
 
         $reason = trim((string) $request->input('reason', ''));
 
-        $purchase->changeStatus(
-            'cancelled',
-            'Cancelled by the customer in the app.' . ($reason !== '' ? ' Reason: ' . $reason : ''),
-            'customer'
-        );
+        /*
+         * Online payment started for this order: asked to Hesabe first
+         * (paid in the meantime -> never cancelled), then the whole order
+         * (every pack of that payment still pending) is cancelled.
+         */
+        $order = collect([$purchase]);
+        $transaction = null;
+
+        if (class_exists(PaymentTransaction::class) && \Illuminate\Support\Facades\Schema::hasTable('payment_transactions')) {
+            $transaction = PaymentTransaction::query()
+                ->where('customer_account_id', $customer->id)
+                ->whereJsonContains('purchase_ids', $purchase->id)
+                ->latest('id')
+                ->first();
+
+            if ($transaction && OnlinePaymentService::enabled()) {
+                $transaction = app(OnlinePaymentService::class)->confirm($transaction);
+
+                if ($transaction->isPaid() || $purchase->fresh()->status !== 'pending') {
+                    return response()->json([
+                        'success' => false,
+                        'already_paid' => true,
+                        'message' => $lang === 'ar'
+                            ? 'تم تأكيد الدفع لهذا الطلب، لا يمكن إلغاؤه من التطبيق. تواصل معنا إذا لزم الأمر.'
+                            : 'The payment of this order is confirmed: it can no longer be cancelled in the app. Contact us if needed.',
+                        'purchase' => $this->formatPurchaseDetail($purchase->fresh(), $customer, $lang),
+                    ], 422);
+                }
+            }
+
+            if ($transaction) {
+                $order = $transaction->purchases()->where('status', 'pending')->values();
+
+                if (!$order->contains('id', $purchase->id)) {
+                    $order->push($purchase);
+                }
+            }
+        }
+
+        $note = 'Cancelled by the customer in the app (order not paid).' . ($reason !== '' ? ' Reason: ' . $reason : '');
+
+        DB::transaction(function () use ($order, $note) {
+            foreach ($order as $pack) {
+                $pack = Purchase::whereKey($pack->id)->lockForUpdate()->first();
+
+                if ($pack && $pack->status === 'pending') {
+                    $pack->changeStatus('cancelled', $note, 'customer');
+                }
+            }
+        });
+
+        // Payment page not used any more: closed
+        if ($transaction && $transaction->isOpen()) {
+            $transaction->update(['status' => PaymentTransaction::STATUS_EXPIRED, 'failure_reason' => 'Order cancelled by the customer.']);
+        }
 
         return response()->json([
             'success' => true,
-            'purchase' => $this->formatPurchaseDetail($purchase, $customer, $lang),
+            'cancelled_ids' => $order->pluck('id')->values(),
+            'message' => $lang === 'ar' ? 'تم إلغاء طلبك.' : 'Your order has been cancelled.',
+            'purchase' => $this->formatPurchaseDetail($purchase->fresh(), $customer, $lang),
         ]);
     }
 

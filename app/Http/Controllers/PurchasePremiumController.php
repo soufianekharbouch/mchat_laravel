@@ -2,15 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\MobileNotification;
 use App\Models\Product;
 use App\Models\Purchase;
+use App\Services\Notifications\NotificationCenter;
 use App\Support\PremiumPack;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Throwable;
 
 /**
  * PREMIUM-... pack: after contacting the customer, the team assigns the
@@ -87,49 +85,12 @@ class PurchasePremiumController extends Controller
     }
 
     /**
-     * Push in the app: "Your custom recipes are ready".
+     * Notification "Your custom recipes are ready" (Notifications menu:
+     * automatic type premium_ready, texts and destination set there).
      */
     private function notifyCustomer(Purchase $purchase): void
     {
-        if (!$purchase->customer_account_id) {
-            return;
-        }
-
-        try {
-            $pet = $purchase->animal?->name ?? $purchase->animal_name;
-
-            $notification = MobileNotification::create([
-                'type' => MobileNotification::TYPE_NUTRITION,
-                'title_en' => 'Your custom recipes are ready 🐾',
-                'title_ar' => 'وصفاتك المخصصة جاهزة 🐾',
-                'body_en' => 'We prepared ' . ($pet ? "{$pet}'s" : 'your') . ' own recipes. Open the app to choose your delivery days.',
-                'body_ar' => 'حضّرنا وصفات خاصة ' . ($pet ? "بـ {$pet}" : 'بحيوانك') . '. افتح التطبيق لاختيار أيام التوصيل.',
-                'target_type' => 'selected_customers',
-                'status' => 'draft',
-            ]);
-
-            DB::table('mobile_notification_recipients')->insert([
-                'notification_id' => $notification->id,
-                'customer_account_id' => $purchase->customer_account_id,
-                'mobile_device_id' => null,
-                'push_status' => 'pending',
-                'push_sent_at' => null,
-                'viewed_at' => null,
-                'dismissed_at' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            app(MobileNotificationController::class)->send(
-                Request::create('/internal/premium-ready', 'POST'),
-                $notification->id
-            );
-        } catch (Throwable $exception) {
-            Log::warning('Premium ready notification failed', [
-                'purchase_id' => $purchase->id,
-                'error' => $exception->getMessage(),
-            ]);
-        }
+        app(NotificationCenter::class)->premiumReady($purchase->fresh() ?? $purchase);
     }
 
     private function authorizePermission(string $permission): void

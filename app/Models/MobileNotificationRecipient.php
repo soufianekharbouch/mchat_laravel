@@ -7,6 +7,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MobileNotificationRecipient extends Model
 {
+    /** Push statuses */
+    public const PUSH_STATUSES = [
+        'pending' => ['label' => 'Waiting', 'color' => 'secondary'],
+        'sent' => ['label' => 'Push sent', 'color' => 'success'],
+        'no_device' => ['label' => 'No phone (in-app only)', 'color' => 'warning'],
+        'failed' => ['label' => 'Push failed', 'color' => 'danger'],
+    ];
+
     protected $table =
         'mobile_notification_recipients';
 
@@ -16,7 +24,10 @@ class MobileNotificationRecipient extends Model
         'mobile_device_id',
         'push_status',
         'push_sent_at',
+        'push_error',
         'viewed_at',
+        'opened_at',
+        'dismissed_at',
     ];
 
     protected function casts(): array
@@ -24,6 +35,8 @@ class MobileNotificationRecipient extends Model
         return [
             'push_sent_at' => 'datetime',
             'viewed_at' => 'datetime',
+            'opened_at' => 'datetime',
+            'dismissed_at' => 'datetime',
         ];
     }
 
@@ -65,20 +78,23 @@ class MobileNotificationRecipient extends Model
 
     public function isPending(): bool
     {
-        return $this->push_status ===
-            'pending';
+        return $this->push_status === 'pending';
     }
 
     public function isSent(): bool
     {
-        return $this->push_status ===
-            'sent';
+        return $this->push_status === 'sent';
     }
 
     public function isFailed(): bool
     {
-        return $this->push_status ===
-            'failed';
+        return $this->push_status === 'failed';
+    }
+
+    public function pushStatusConfig(): array
+    {
+        return self::PUSH_STATUSES[$this->push_status]
+            ?? ['label' => ucfirst((string) $this->push_status), 'color' => 'secondary'];
     }
 
     /*
@@ -87,10 +103,15 @@ class MobileNotificationRecipient extends Model
     |--------------------------------------------------------------------------
     */
 
+    /** Seen in the list of notifications of the app. */
     public function hasBeenViewed(): bool
     {
-        return !is_null(
-            $this->viewed_at
-        );
+        return !is_null($this->viewed_at) || !is_null($this->opened_at);
+    }
+
+    /** Tapped (push or list): the app opened its destination. */
+    public function hasBeenOpened(): bool
+    {
+        return !is_null($this->opened_at);
     }
 }

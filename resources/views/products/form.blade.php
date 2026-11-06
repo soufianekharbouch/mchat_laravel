@@ -37,6 +37,13 @@
     $species = old('species', $product->species ?? 'Cat');
 @endphp
 
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="fas fa-check-circle me-1"></i>{{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
+
 @if($errors->any())
     <div class="alert alert-danger">
         <div class="fw-semibold mb-1"><i class="fas fa-exclamation-triangle me-1"></i>Please fix the following:</div>
@@ -97,6 +104,116 @@
                         <textarea id="description_ar" name="description_ar" rows="4" dir="rtl"
                                   class="form-control @error('description_ar') is-invalid @enderror">{{ old('description_ar', $product->description_ar) }}</textarea>
                         @error('description_ar')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- PRODUCT PAGE OF THE APP --}}
+        @php
+            $features = (array) old('features', $product->exists ? $product->featuresList() : \App\Models\Product::DEFAULT_FEATURES);
+            $contentRows = array_values((array) old('contents', $product->contents ?? []));
+            $libraryUrls = collect($mediaLibrary ?? [])->pluck('url', 'path');
+        @endphp
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-yellow py-2"><strong><i class="fas fa-mobile-alt me-1"></i>Product page of the app</strong></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="subtitle" class="form-label">Subtitle (English)</label>
+                        <input type="text" id="subtitle" name="subtitle" maxlength="191"
+                               class="form-control @error('subtitle') is-invalid @enderror"
+                               value="{{ old('subtitle', $product->subtitle) }}" placeholder="Try our fresh meals">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="subtitle_ar" class="form-label">Subtitle (Arabic)</label>
+                        <input type="text" id="subtitle_ar" name="subtitle_ar" maxlength="191" dir="rtl"
+                               class="form-control @error('subtitle_ar') is-invalid @enderror"
+                               value="{{ old('subtitle_ar', $product->subtitle_ar) }}" placeholder="جرّب وجباتنا الطازجة">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="bags_count" class="form-label">Bags in the pack (badge)</label>
+                        <input type="number" min="1" id="bags_count" name="bags_count"
+                               class="form-control @error('bags_count') is-invalid @enderror"
+                               value="{{ old('bags_count', $product->bags_count) }}" placeholder="= total recipes">
+                        <div class="form-text">Badge "5 bags" on the photo. Empty = total recipes.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="bag_weight_grams" class="form-label">Weight of one bag (g)</label>
+                        <input type="number" min="1" id="bag_weight_grams" name="bag_weight_grams"
+                               class="form-control @error('bag_weight_grams') is-invalid @enderror"
+                               value="{{ old('bag_weight_grams', $product->bag_weight_grams) }}" placeholder="170">
+                        <div class="form-text">Empty = not shown.</div>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-center">
+                        <div class="form-check form-switch mt-3">
+                            <input type="hidden" name="free_delivery" value="0">
+                            <input class="form-check-input" type="checkbox" role="switch" id="free_delivery" name="free_delivery" value="1"
+                                   @checked(old('free_delivery', $product->free_delivery ?? true))>
+                            <label class="form-check-label" for="free_delivery">Free delivery</label>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label d-block">Qualities shown (icons)</label>
+                        @foreach(\App\Models\Product::FEATURES as $key => $label)
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="features[]" value="{{ $key }}" id="feature_{{ $key }}"
+                                       @checked(in_array($key, $features, true))>
+                                <label class="form-check-label" for="feature_{{ $key }}">{{ $label['en'] }} <span class="text-muted">· {{ $label['ar'] }}</span></label>
+                            </div>
+                        @endforeach
+                        <div class="form-text">None ticked = Fresh, Natural, Keep chilled or frozen.</div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label d-block mb-1">What's inside the pack</label>
+                        <div class="form-text mt-0 mb-2">One line per item (e.g. "Bags" × 5, "Flavour powder"). Empty lines are ignored.</div>
+                        @error('contents')<div class="text-danger small mb-1">{{ $message }}</div>@enderror
+
+                        @for($i = 0; $i < \App\Models\Product::MAX_CONTENTS; $i++)
+                            @php
+                                $row = $contentRows[$i] ?? [];
+                                $rowImage = $row['image'] ?? '';
+                                $rowImageUrl = $rowImage !== '' ? ($libraryUrls[$rowImage] ?? asset('storage/app/public/' . $rowImage)) : '';
+                            @endphp
+                            <div class="row g-2 align-items-center mb-2 content-row">
+                                <div class="col-auto">
+                                    <input type="hidden" name="contents[{{ $i }}][image]" id="content_image_{{ $i }}" value="{{ $rowImage }}">
+                                    <button type="button" class="btn btn-light border content-image-button p-0"
+                                            data-library-mode="content" data-content-index="{{ $i }}" title="Choose the image">
+                                        <img id="content_preview_{{ $i }}" src="{{ $rowImageUrl }}" alt="" class="{{ $rowImageUrl ? '' : 'd-none' }}">
+                                        <i class="fas fa-image text-muted {{ $rowImageUrl ? 'd-none' : '' }}" id="content_icon_{{ $i }}"></i>
+                                    </button>
+                                </div>
+                                <div class="col">
+                                    <input type="text" name="contents[{{ $i }}][label]" class="form-control form-control-sm" maxlength="100"
+                                           value="{{ $row['label'] ?? '' }}" placeholder="Label (English) e.g. Bags">
+                                </div>
+                                <div class="col">
+                                    <input type="text" name="contents[{{ $i }}][label_ar]" class="form-control form-control-sm" maxlength="100" dir="rtl"
+                                           value="{{ $row['label_ar'] ?? '' }}" placeholder="الاسم (عربي) مثال: أكياس">
+                                </div>
+                                <div class="col-2">
+                                    <input type="number" min="1" name="contents[{{ $i }}][quantity]" class="form-control form-control-sm"
+                                           value="{{ $row['quantity'] ?? '' }}" placeholder="Qty">
+                                </div>
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary content-clear" data-content-index="{{ $i }}" title="Clear the line">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        @endfor
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-text">
+                            The blocks "Ingredients", "How to serve", "Storage", "Delivery" of the app come from the
+                            <strong>description</strong>: one block per <code>## Title</code> line, then its text
+                            (lines starting with <code>-</code> = list, <code>**bold**</code>).
+                        </div>
                     </div>
                 </div>
             </div>
@@ -427,10 +544,13 @@
                          class="product-image-preview {{ $product->image_url ? '' : 'd-none' }}">
                 </div>
 
-                <input type="file" name="image" id="image" accept="image/jpeg,image/png,image/webp"
-                       class="form-control form-control-sm @error('image') is-invalid @enderror">
-                @error('image')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                <div class="form-text">JPG, PNG or WebP, max 4 MB.</div>
+                {{-- Main image: chosen in the library (upload a new one there) --}}
+                <input type="hidden" name="image_existing" id="image_existing" value="{{ old('image_existing') }}">
+                <button type="button" class="btn btn-sm btn-outline-primary w-100" data-library-mode="cover">
+                    <i class="fas fa-images me-1"></i>{{ $product->image ? 'Change the image' : 'Choose an image' }}
+                </button>
+                @error('image')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                <div class="form-text">From the library, or upload a new one there (JPG, PNG, WebP, max 4 MB).</div>
 
                 @if($product->image)
                     <div class="form-check mt-2">
@@ -439,6 +559,76 @@
                         <label class="form-check-label small" for="remove_image">Remove current image</label>
                     </div>
                 @endif
+            </div>
+        </div>
+
+        {{-- GALLERY: images + videos (carousel of the app) --}}
+        @php
+            $galleryItems = $product->exists ? $product->media : collect();
+            $maxMedia = \App\Models\ProductMedia::MAX_PER_PRODUCT;
+            $removedMedia = array_map('intval', (array) old('media_remove', []));
+        @endphp
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-yellow py-2 d-flex justify-content-between align-items-center">
+                <strong><i class="fas fa-photo-video me-1"></i>Gallery</strong>
+                <span class="badge bg-mauve" id="mediaCount">{{ $galleryItems->count() }} / {{ $maxMedia }}</span>
+            </div>
+            <div class="card-body">
+                <div class="form-text mt-0 mb-2">
+                    Shown in the app after the main image, as a carousel. Videos play in the carousel.
+                </div>
+
+                @error('media_files')<div class="alert alert-danger py-2 small">{{ $message }}</div>@enderror
+                @error('media_files.*')<div class="alert alert-danger py-2 small">{{ $message }}</div>@enderror
+
+                <input type="hidden" name="media_order" id="media_order" value="{{ $galleryItems->pluck('id')->implode(',') }}">
+
+                {{-- Saved items: order + remove --}}
+                <div id="mediaList" class="media-list">
+                    @foreach($galleryItems as $item)
+                        @php $isRemoved = in_array($item->id, $removedMedia, true); @endphp
+                        <div class="media-item {{ $isRemoved ? 'is-removed' : '' }}" data-id="{{ $item->id }}">
+                            <div class="media-thumb">
+                                @if($item->isVideo())
+                                    <video src="{{ $item->url }}#t=0.5" preload="metadata" muted playsinline></video>
+                                    <span class="media-play"><i class="fas fa-play"></i></span>
+                                @else
+                                    <img src="{{ $item->url }}" alt="">
+                                @endif
+                            </div>
+
+                            <div class="media-info small">
+                                <span class="badge {{ $item->isVideo() ? 'bg-dark' : 'bg-secondary' }}">
+                                    <i class="fas fa-{{ $item->isVideo() ? 'video' : 'image' }} me-1"></i>{{ $item->isVideo() ? 'Video' : 'Image' }}
+                                </span>
+                                <div class="text-muted">{{ $item->sizeLabel() }}</div>
+                            </div>
+
+                            <div class="media-actions">
+                                <button type="button" class="btn btn-sm btn-light media-up" title="Move up"><i class="fas fa-arrow-up"></i></button>
+                                <button type="button" class="btn btn-sm btn-light media-down" title="Move down"><i class="fas fa-arrow-down"></i></button>
+                                <label class="btn btn-sm btn-outline-danger mb-0" title="Remove">
+                                    <input type="checkbox" class="d-none media-remove" name="media_remove[]" value="{{ $item->id }}" @checked($isRemoved)>
+                                    <i class="fas fa-trash"></i>
+                                </label>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                {{-- Added from the library (upload new files there, one by one) --}}
+                <button type="button" class="btn btn-sm btn-outline-primary w-100 mt-2" data-library-mode="gallery">
+                    <i class="fas fa-images me-1"></i>Add images / videos
+                </button>
+                <div class="form-text">
+                    From the library, or upload new files there one by one (images max 4 MB · videos MP4 / MOV / WebM
+                    max 50 MB). Max {{ $maxMedia }} per product, added at the end.
+                </div>
+                <div id="mediaLibraryChosen" class="media-new">
+                    @foreach((array) old('media_existing', []) as $path)
+                        <input type="hidden" name="media_existing[]" value="{{ $path }}">
+                    @endforeach
+                </div>
             </div>
         </div>
 
@@ -552,13 +742,120 @@
 </div>
 
 <div class="d-flex justify-content-end gap-2 mt-2">
+    @if($product->exists && auth()->user()?->hasPermission('products.create'))
+        {{-- Copy of the SAVED product (unsaved changes of this page are not copied) --}}
+        <button type="submit" class="btn btn-outline-dark me-auto"
+                formaction="{{ route('products.duplicate', $product) }}" formnovalidate
+                onclick="return confirm('Duplicate this product? The copy uses the SAVED version, it is inactive and its code ends with -COPY.');">
+            <i class="fas fa-copy me-1"></i>Duplicate
+        </button>
+    @endif
+
     <a href="{{ route('products.index') }}" class="btn btn-outline-secondary">Cancel</a>
     <button type="submit" class="btn btn-mauve">
         <i class="fas fa-save me-1"></i>{{ $product->exists ? 'Save changes' : 'Create product' }}
     </button>
 </div>
 
+{{-- MEDIA LIBRARY: images / videos already uploaded for the products --}}
+<div class="modal fade" id="mediaLibraryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title" id="mediaLibraryTitle"><i class="fas fa-images me-1"></i>Media library</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {{-- Upload a new file (one by one): goes into the library, selected at once --}}
+                <div class="lib-upload mb-3">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <label class="btn btn-mauve btn-sm mb-0">
+                            <i class="fas fa-cloud-upload-alt me-1"></i>Upload a file
+                            <input type="file" id="libUploadInput" class="d-none"
+                                   accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm,video/x-m4v">
+                        </label>
+                        <span class="small text-muted" id="libUploadHint">Images JPG / PNG / WebP max 4 MB · videos MP4 / MOV / WebM max 50 MB</span>
+                    </div>
+                    @php $serverLimitMb = round(($serverUploadLimitKb ?? 51200) / 1024, 1); @endphp
+                    @if($serverLimitMb < 50)
+                        <div class="alert alert-warning py-1 px-2 small mt-2 mb-0">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            This server accepts files up to <b>{{ $serverLimitMb }} MB</b> only (PHP upload_max_filesize / post_max_size).
+                            Raise them to 64M in cPanel to upload videos up to 50 MB.
+                        </div>
+                    @endif
+                    <div class="progress mt-2 d-none" id="libUploadProgressWrap" style="height: 6px;">
+                        <div class="progress-bar bg-mauve" id="libUploadProgress" style="width: 0%"></div>
+                    </div>
+                    <div class="small mt-1" id="libUploadStatus"></div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <input type="text" class="form-control form-control-sm" id="libSearch" placeholder="Search by product code or file name...">
+                    </div>
+                    <div class="col-md-6 d-flex gap-2" id="libTypeFilter">
+                        <button type="button" class="btn btn-sm btn-mauve" data-type="">All</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-type="image"><i class="fas fa-image me-1"></i>Images</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-type="video"><i class="fas fa-video me-1"></i>Videos</button>
+                    </div>
+                </div>
+                <div id="libGrid" class="lib-grid"></div>
+                <div id="libEmpty" class="text-center text-muted py-4" style="display:none;">No media found.</div>
+            </div>
+            <div class="modal-footer py-2">
+                <span class="small text-muted me-auto" id="libSelectedInfo"></span>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-mauve" id="libConfirm"><i class="fas fa-check me-1"></i>Use</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="application/json" id="mediaLibraryData">{!! json_encode($mediaLibrary ?? [], JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+
 <style>
+.content-image-button { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.content-image-button img { width: 100%; height: 100%; object-fit: cover; }
+.lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.lib-item { position: relative; border: 2px solid transparent; border-radius: 10px; overflow: hidden; cursor: pointer; background: #f6f6f6; }
+.lib-item:hover { border-color: rgba(108,92,231,.35); }
+.lib-item.is-selected { border-color: #6c5ce7; box-shadow: 0 0 0 2px rgba(108,92,231,.25); }
+.lib-item .lib-thumb { position: relative; height: 110px; background: #222; }
+.lib-item .lib-thumb img, .lib-item .lib-thumb video { width: 100%; height: 100%; object-fit: cover; }
+.lib-item .lib-check {
+    position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(255,255,255,.85); display: flex; align-items: center; justify-content: center; font-size: 12px; color: transparent;
+}
+.lib-item.is-selected .lib-check { background: #6c5ce7; color: #fff; }
+.lib-item .lib-label { padding: 4px 6px; font-size: 11px; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.media-new-item .lib-remove {
+    position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border-radius: 50%; border: 0;
+    background: rgba(0,0,0,.6); color: #fff; font-size: 10px; line-height: 18px; padding: 0;
+}
+.media-new-item { position: relative; }
+.media-new-item .badge-library { font-size: 10px; }
+
+.media-list { display: flex; flex-direction: column; gap: 8px; }
+.media-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px; border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; background: #fff;
+}
+.media-item.is-removed { opacity: .4; background: #fff5f5; }
+.media-item.is-removed .media-thumb { filter: grayscale(1); }
+.media-thumb { position: relative; width: 64px; height: 64px; flex-shrink: 0; border-radius: 8px; overflow: hidden; background: #222; }
+.media-thumb img, .media-thumb video { width: 100%; height: 100%; object-fit: cover; }
+.media-play {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 18px; text-shadow: 0 1px 4px rgba(0,0,0,.6);
+}
+.media-info { flex: 1; min-width: 0; }
+.media-actions { display: flex; gap: 4px; }
+.media-actions label:has(input:checked) { background: #dc3545; color: #fff; }
+.media-new { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.media-new .media-new-item { width: 72px; text-align: center; font-size: 11px; color: #666; }
+.media-new .media-new-item .media-thumb { width: 72px; height: 72px; }
+.media-new .media-new-item.is-error .media-thumb { outline: 2px solid #dc3545; }
 .recipe-list {
     max-height: 520px;
     overflow-y: auto;
@@ -868,14 +1165,335 @@ document.addEventListener('DOMContentLoaded', function () {
     | IMAGE PREVIEW
     |--------------------------------------------------------------------------
     */
-    $('image').addEventListener('change', function () {
-        var file = this.files && this.files[0];
-        var preview = $('imagePreview');
-        if (!file) return;
-        preview.src = URL.createObjectURL(file);
-        preview.classList.remove('d-none');
-        if ($('remove_image')) $('remove_image').checked = false;
+    // Main image: chosen in the library (see MEDIA LIBRARY below)
+
+    /*
+    |--------------------------------------------------------------------------
+    | GALLERY: order, remove, preview of the new files
+    |--------------------------------------------------------------------------
+    */
+    var mediaList = $('mediaList');
+    var maxMedia = {{ \App\Models\ProductMedia::MAX_PER_PRODUCT }};
+
+    function mediaKeptCount() {
+        return mediaList.querySelectorAll('.media-item:not(.is-removed)').length;
+    }
+
+    function updateMediaState() {
+        $('media_order').value = Array.prototype.map.call(mediaList.querySelectorAll('.media-item'), function (item) {
+            return item.getAttribute('data-id');
+        }).join(',');
+
+        if (typeof renderChosenGallery === 'function') renderChosenGallery();
+    }
+
+    mediaList.addEventListener('click', function (event) {
+        var button = event.target.closest('.media-up, .media-down');
+        if (!button) return;
+
+        var item = button.closest('.media-item');
+        if (button.classList.contains('media-up') && item.previousElementSibling) {
+            mediaList.insertBefore(item, item.previousElementSibling);
+        } else if (button.classList.contains('media-down') && item.nextElementSibling) {
+            mediaList.insertBefore(item.nextElementSibling, item);
+        }
+        updateMediaState();
     });
+
+    mediaList.addEventListener('change', function (event) {
+        if (!event.target.classList.contains('media-remove')) return;
+        event.target.closest('.media-item').classList.toggle('is-removed', event.target.checked);
+        updateMediaState();
+    });
+
+    updateMediaState();
+
+    /*
+    |--------------------------------------------------------------------------
+    | MEDIA LIBRARY (reuse files already uploaded, nothing uploaded again)
+    |--------------------------------------------------------------------------
+    */
+    var library = [];
+    try { library = JSON.parse($('mediaLibraryData').textContent || '[]'); } catch (e) { library = []; }
+
+    var libModalEl = $('mediaLibraryModal');
+    var libModal = (window.bootstrap && libModalEl) ? new bootstrap.Modal(libModalEl) : null;
+    var libMode = 'gallery';
+    var libType = '';
+    var libTarget = null;
+    var libSelected = {};
+
+    function chosenGalleryPaths() {
+        return Array.prototype.map.call(
+            $('mediaLibraryChosen').querySelectorAll('input[name="media_existing[]"]'),
+            function (input) { return input.value; }
+        );
+    }
+
+    function libItem(path) {
+        return (library || []).find(function (item) { return item.path === path; });
+    }
+
+    function thumbHtml(item) {
+        return item.type === 'video'
+            ? '<video src="' + escapeHtml(item.url) + '#t=0.5" preload="metadata" muted playsinline></video><span class="media-play"><i class="fas fa-play"></i></span>'
+            : '<img src="' + escapeHtml(item.url) + '" alt="" loading="lazy">';
+    }
+
+    function renderLibrary() {
+        var q = ($('libSearch').value || '').trim().toLowerCase();
+        var grid = $('libGrid');
+        var shown = 0;
+        grid.innerHTML = '';
+
+        library.forEach(function (item) {
+            if (libMode !== 'gallery' && item.type !== 'image') return;
+            // Gallery: the files already in this product's gallery are not proposed again
+            if (libMode === 'gallery' && item.own) return;
+            if (libType && item.type !== libType) return;
+            if (q && ((item.products || '') + ' ' + (item.name || '')).toLowerCase().indexOf(q) === -1) return;
+
+            var el = document.createElement('div');
+            el.className = 'lib-item' + (libSelected[item.path] ? ' is-selected' : '');
+            el.innerHTML = '<div class="lib-thumb">' + thumbHtml(item) + '</div>'
+                + '<span class="lib-check"><i class="fas fa-check"></i></span>'
+                + '<div class="lib-label" title="' + escapeHtml(item.products || item.name || '') + '">'
+                + escapeHtml(item.products || item.name || 'Not used yet') + '</div>';
+
+            el.addEventListener('click', function () {
+                if (libMode !== 'gallery') {
+                    libSelected = {};
+                    libSelected[item.path] = true;
+                } else if (libSelected[item.path]) {
+                    delete libSelected[item.path];
+                } else {
+                    libSelected[item.path] = true;
+                }
+                renderLibrary();
+            });
+
+            grid.appendChild(el);
+            shown++;
+        });
+
+        $('libEmpty').style.display = shown ? 'none' : '';
+        var count = Object.keys(libSelected).length;
+        $('libSelectedInfo').textContent = count ? count + ' selected' : '';
+        $('libConfirm').disabled = libMode !== 'gallery' && count === 0;
+    }
+
+    function openLibrary(mode) {
+        libMode = mode;
+        libSelected = {};
+        $('libUploadStatus').innerHTML = '';
+        $('libUploadInput').setAttribute('accept', mode !== 'gallery'
+            ? 'image/jpeg,image/png,image/webp'
+            : 'image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm,video/x-m4v');
+
+        if (mode === 'gallery') {
+            chosenGalleryPaths().forEach(function (path) { libSelected[path] = true; });
+        } else if (mode === 'content') {
+            var current = $('content_image_' + libTarget);
+            if (current && current.value) libSelected[current.value] = true;
+        } else if ($('image_existing').value) {
+            libSelected[$('image_existing').value] = true;
+        }
+
+        $('mediaLibraryTitle').innerHTML = '<i class="fas fa-images me-1"></i>'
+            + (mode === 'cover' ? 'Choose the main image' : (mode === 'content' ? 'Image of the item' : 'Add images / videos to the gallery'));
+        document.querySelectorAll('#libTypeFilter button').forEach(function (button) {
+            button.style.display = mode !== 'gallery' && button.getAttribute('data-type') !== '' ? 'none' : '';
+        });
+
+        renderLibrary();
+        if (libModal) libModal.show();
+    }
+
+    function renderChosenGallery() {
+        var box = $('mediaLibraryChosen');
+        var paths = chosenGalleryPaths();
+        box.querySelectorAll('.media-new-item').forEach(function (el) { el.remove(); });
+
+        paths.forEach(function (path) {
+            var item = libItem(path);
+            if (!item) return;
+
+            var el = document.createElement('div');
+            el.className = 'media-new-item';
+            el.innerHTML = '<div class="media-thumb">' + thumbHtml(item) + '</div>'
+                + '<span class="badge bg-info text-dark badge-library">library</span>'
+                + '<button type="button" class="lib-remove" title="Remove">&times;</button>';
+            el.querySelector('.lib-remove').addEventListener('click', function () {
+                var input = box.querySelector('input[value="' + CSS.escape(path) + '"]');
+                if (input) input.remove();
+                renderChosenGallery();
+            });
+            box.appendChild(el);
+        });
+
+        // Counter of the gallery (kept + new files + library)
+        var total = mediaKeptCount() + paths.length;
+        var badge = $('mediaCount');
+        badge.textContent = total + ' / ' + maxMedia;
+        badge.className = 'badge ' + (total > maxMedia ? 'bg-danger' : 'bg-mauve');
+    }
+
+    $('libConfirm').addEventListener('click', function () {
+        var chosen = Object.keys(libSelected);
+
+        if (libMode === 'content') {
+            var contentItem = libItem(chosen[0]);
+            if (contentItem) {
+                $('content_image_' + libTarget).value = contentItem.path;
+                $('content_preview_' + libTarget).src = contentItem.url;
+                $('content_preview_' + libTarget).classList.remove('d-none');
+                $('content_icon_' + libTarget).classList.add('d-none');
+            }
+        } else if (libMode === 'cover') {
+            var item = libItem(chosen[0]);
+            if (item) {
+                $('image_existing').value = item.path;
+                $('imagePreview').src = item.url;
+                $('imagePreview').classList.remove('d-none');
+                if ($('remove_image')) $('remove_image').checked = false;
+            }
+        } else {
+            var box = $('mediaLibraryChosen');
+            box.querySelectorAll('input[name="media_existing[]"]').forEach(function (input) { input.remove(); });
+            chosen.forEach(function (path) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'media_existing[]';
+                input.value = path;
+                box.appendChild(input);
+            });
+            renderChosenGallery();
+        }
+
+        if (libModal) libModal.hide();
+    });
+
+    document.querySelectorAll('[data-library-mode]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            libTarget = button.getAttribute('data-content-index');
+            openLibrary(button.getAttribute('data-library-mode'));
+        });
+    });
+
+    // "What's inside the pack": clear one line
+    document.querySelectorAll('.content-clear').forEach(function (button) {
+        button.addEventListener('click', function () {
+            var row = button.closest('.content-row');
+            var index = button.getAttribute('data-content-index');
+            row.querySelectorAll('input').forEach(function (input) { input.value = ''; });
+            $('content_preview_' + index).classList.add('d-none');
+            $('content_preview_' + index).removeAttribute('src');
+            $('content_icon_' + index).classList.remove('d-none');
+        });
+    });
+
+    $('libSearch').addEventListener('input', renderLibrary);
+    document.querySelectorAll('#libTypeFilter button').forEach(function (button) {
+        button.addEventListener('click', function () {
+            libType = button.getAttribute('data-type');
+            document.querySelectorAll('#libTypeFilter button').forEach(function (other) {
+                other.className = 'btn btn-sm ' + (other === button ? 'btn-mauve' : 'btn-outline-secondary');
+            });
+            renderLibrary();
+        });
+    });
+
+    /*
+     * Upload ONE file into the library (sent at once, with progress):
+     * it appears first in the grid and is selected.
+     */
+    var uploadUrl = @json(route('products.media.upload'));
+    var csrfToken = (document.querySelector('meta[name="csrf-token"]') || {}).content
+        || (document.querySelector('input[name="_token"]') || {}).value || '';
+
+    $('libUploadInput').addEventListener('change', function () {
+        var file = this.files && this.files[0];
+        var input = this;
+        if (!file) return;
+
+        var isVideo = file.type.indexOf('video/') === 0;
+        var serverMaxMb = {{ round(($serverUploadLimitKb ?? 51200) / 1024, 1) }};
+        var maxMb = Math.min(isVideo ? 50 : 4, serverMaxMb);
+        var status = $('libUploadStatus');
+
+        if (libMode !== 'gallery' && isVideo) {
+            status.innerHTML = '<span class="text-danger">Choose an image (not a video).</span>';
+            input.value = '';
+            return;
+        }
+
+        if (file.size > maxMb * 1024 * 1024) {
+            status.innerHTML = '<span class="text-danger">' + escapeHtml(file.name) + ' (' + (file.size / 1048576).toFixed(1)
+                + ' MB): too big, max ' + maxMb + ' MB'
+                + (serverMaxMb < (isVideo ? 50 : 4) ? ' on this server (raise post_max_size / upload_max_filesize in cPanel)' : '') + '.</span>';
+            input.value = '';
+            return;
+        }
+
+        var data = new FormData();
+        data.append('file', file);
+        data.append('_token', csrfToken);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', uploadUrl);
+        xhr.setRequestHeader('Accept', 'application/json');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+        $('libUploadProgressWrap').classList.remove('d-none');
+        $('libUploadProgress').style.width = '0%';
+        status.innerHTML = '<span class="text-muted">Uploading ' + escapeHtml(file.name) + '...</span>';
+        input.disabled = true;
+
+        xhr.upload.addEventListener('progress', function (event) {
+            if (event.lengthComputable) {
+                $('libUploadProgress').style.width = Math.round(event.loaded / event.total * 100) + '%';
+            }
+        });
+
+        xhr.onload = function () {
+            input.disabled = false;
+            input.value = '';
+            $('libUploadProgressWrap').classList.add('d-none');
+
+            var response = null;
+            try { response = JSON.parse(xhr.responseText); } catch (e) { response = null; }
+
+            if (xhr.status >= 200 && xhr.status < 300 && response && response.item) {
+                library.unshift(response.item);
+                if (libMode !== 'gallery') libSelected = {};
+                libSelected[response.item.path] = true;
+                status.innerHTML = '<span class="text-success"><i class="fas fa-check me-1"></i>'
+                    + escapeHtml(file.name) + ' uploaded and selected. You can upload another one.</span>';
+                renderLibrary();
+                return;
+            }
+
+            var message = (response && (response.message || (response.errors && Object.values(response.errors)[0][0])))
+                || (xhr.status === 413
+                    ? 'File too big for the server: raise post_max_size and upload_max_filesize in cPanel (PHP).'
+                    : 'Upload failed (HTTP ' + xhr.status + ').');
+            status.innerHTML = '<span class="text-danger">' + escapeHtml(message) + '</span>';
+        };
+
+        xhr.onerror = function () {
+            input.disabled = false;
+            input.value = '';
+            $('libUploadProgressWrap').classList.add('d-none');
+            status.innerHTML = '<span class="text-danger">Network error: upload failed.</span>';
+        };
+
+        xhr.send(data);
+    });
+
+    // Counter also follows the library choices
+    mediaList.addEventListener('change', renderChosenGallery);
+    mediaList.addEventListener('click', function () { setTimeout(renderChosenGallery, 0); });
+    renderChosenGallery();
 
     /*
     |--------------------------------------------------------------------------

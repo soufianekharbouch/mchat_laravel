@@ -39,6 +39,25 @@ class Product extends Model
         'Dog' => ['Puppy', 'Adult', 'Senior'],
     ];
 
+    /**
+     * Qualities shown on the product page of the app (icons in the app).
+     * Empty = DEFAULT_FEATURES.
+     */
+    public const FEATURES = [
+        'fresh' => ['en' => 'Fresh', 'ar' => 'طازج'],
+        'natural' => ['en' => 'Natural', 'ar' => 'طبيعي'],
+        'chilled' => ['en' => 'Keep chilled or frozen', 'ar' => 'يحفظ مبرد أو مجمد'],
+        'human_grade' => ['en' => 'Human grade', 'ar' => 'صالح للاستهلاك البشري'],
+        'no_preservatives' => ['en' => 'No preservatives', 'ar' => 'بدون مواد حافظة'],
+        'grain_free' => ['en' => 'Grain free', 'ar' => 'خالي من الحبوب'],
+        'vet_approved' => ['en' => 'Vet approved', 'ar' => 'معتمد بيطرياً'],
+    ];
+
+    public const DEFAULT_FEATURES = ['fresh', 'natural', 'chilled'];
+
+    /** "What's inside the pack": max lines */
+    public const MAX_CONTENTS = 4;
+
     public const LIFE_STAGE_LABELS = [
         'Kitten' => ['en' => 'Kitten', 'ar' => 'صغير (قطيط)'],
         'Puppy' => ['en' => 'Puppy', 'ar' => 'صغير (جرو)'],
@@ -50,6 +69,8 @@ class Product extends Model
         'code',
         'name',
         'name_ar',
+        'subtitle',
+        'subtitle_ar',
         'description',
         'description_ar',
         'image',
@@ -72,6 +93,13 @@ class Product extends Model
 
         'total_recipes',
 
+        // Product page of the app
+        'bags_count',
+        'bag_weight_grams',
+        'free_delivery',
+        'features',
+        'contents',
+
         'min_deliveries',
         'max_deliveries',
         'min_recipes_per_delivery',
@@ -90,6 +118,10 @@ class Product extends Model
     protected $casts = [
         'is_trial' => 'boolean',
         'is_active' => 'boolean',
+        'free_delivery' => 'boolean',
+        'bags_count' => 'integer',
+        'bag_weight_grams' => 'integer',
+        'contents' => 'array',
 
         'price' => 'decimal:3',
         'promo_price' => 'decimal:3',
@@ -124,6 +156,15 @@ class Product extends Model
             ->withPivot(['max_quantity', 'is_default', 'sort_order'])
             ->withTimestamps()
             ->orderBy('product_recipes.sort_order');
+    }
+
+    /**
+     * Gallery of the app: extra images and videos, in their order
+     * (the "image" column stays the main image).
+     */
+    public function media(): HasMany
+    {
+        return $this->hasMany(ProductMedia::class)->orderBy('sort_order')->orderBy('id');
     }
 
     /**
@@ -402,6 +443,60 @@ class Product extends Model
         return $lang === 'ar' && filled($this->name_ar) ? $this->name_ar : $this->name;
     }
 
+    public function localizedSubtitle(string $lang = 'en'): ?string
+    {
+        return $lang === 'ar' && filled($this->subtitle_ar) ? $this->subtitle_ar : ($this->subtitle ?: null);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PRODUCT PAGE OF THE APP
+    |--------------------------------------------------------------------------
+    */
+
+    /** ['fresh', 'natural'] (saved "fresh,natural"; empty = default list). */
+    public function featuresList(): array
+    {
+        $saved = array_values(array_intersect(
+            array_keys(self::FEATURES),
+            array_filter(explode(',', (string) ($this->attributes['features'] ?? '')))
+        ));
+
+        return $saved ?: self::DEFAULT_FEATURES;
+    }
+
+    public function setFeaturesAttribute($value): void
+    {
+        $values = is_array($value) ? $value : explode(',', (string) $value);
+        $values = array_values(array_intersect(array_keys(self::FEATURES), array_map('trim', $values)));
+
+        $this->attributes['features'] = $values ? implode(',', $values) : null;
+    }
+
+    /** Bags of the pack (badge "5 bags"): bags_count, else the recipes. */
+    public function bagsCount(): int
+    {
+        return (int) ($this->bags_count ?: $this->total_recipes);
+    }
+
+    /**
+     * "What's inside the pack" for the app.
+     *
+     * @return array<int, array{label: string, quantity: ?int, image_url: ?string}>
+     */
+    public function contentsForApi(string $lang = 'en'): array
+    {
+        return collect($this->contents ?? [])
+            ->filter(fn ($row) => is_array($row) && (filled($row['label'] ?? null) || filled($row['label_ar'] ?? null)))
+            ->map(fn ($row) => [
+                'label' => $lang === 'ar' && filled($row['label_ar'] ?? null) ? $row['label_ar'] : (string) ($row['label'] ?? $row['label_ar']),
+                'quantity' => filled($row['quantity'] ?? null) ? (int) $row['quantity'] : null,
+                'image_url' => filled($row['image'] ?? null) ? asset('storage/app/public/' . $row['image']) : null,
+            ])
+            ->values()
+            ->all();
+    }
+
     public function localizedDescription(string $lang = 'en'): ?string
     {
         return $lang === 'ar' && filled($this->description_ar)
@@ -415,5 +510,34 @@ class Product extends Model
     public function getImageUrlAttribute(): ?string
     {
         return $this->image ? asset('storage/app/public/' . $this->image) : null;
+    }
+
+    /**
+     * Carousel of the app: main image first, then the gallery
+     * (images and videos in their order).
+     *
+     * @return array<int, array{id: string, type: string, url: string, poster: ?string}>
+     */
+    public function galleryForApi(): array
+    {
+        $items = [];
+
+        if ($this->image_url) {
+            $items[] = ['id' => 'cover', 'type' => 'image', 'url' => $this->image_url, 'poster' => null];
+        }
+
+        $media = $this->relationLoaded('media') ? $this->media : $this->media()->get();
+
+        foreach ($media as $item) {
+            $items[] = [
+                'id' => 'm' . $item->id,
+                'type' => $item->type,
+                'url' => $item->url,
+                // Video: the main image is shown before it plays
+                'poster' => $item->isVideo() ? $this->image_url : null,
+            ];
+        }
+
+        return $items;
     }
 }

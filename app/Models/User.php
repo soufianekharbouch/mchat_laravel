@@ -387,6 +387,26 @@ class User extends Authenticatable
                 ],
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Loyalty Program
+            |--------------------------------------------------------------------------
+            */
+
+            'loyalty' => [
+                'title' => 'Loyalty Program',
+
+                'description' =>
+                    'View and manage customer loyalty points.',
+
+                'permissions' => [
+                    'loyalty.view' =>
+                        'View loyalty program',
+
+                    'loyalty.update' =>
+                        'Manage loyalty points',
+                ],
+            ],
 
             /*
             |--------------------------------------------------------------------------
@@ -463,16 +483,6 @@ class User extends Authenticatable
                         'View app communications',
 
                     /*
-                     * Push notifications
-                     */
-
-                    'app_communications.notifications.view' =>
-                        'View notifications',
-
-                    'app_communications.notifications.send' =>
-                        'Create and send notifications',
-
-                    /*
                      * Customer messages
                      */
 
@@ -495,6 +505,35 @@ class User extends Authenticatable
 
                     'app_communications.subscription_alerts' =>
                         'Manage subscription alerts',
+                ],
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Notifications (menu "Notifications")
+            |--------------------------------------------------------------------------
+            |
+            | Automatic and manual notifications of the mobile app.
+            | Replaces app_communications.notifications.view / .send.
+            |
+            */
+
+            'notifications' => [
+                'title' => 'Notifications',
+
+                'description' =>
+                    'Automatic and manual notifications of the mobile app: '
+                    . 'scheduled, sent, read by the customers.',
+
+                'permissions' => [
+                    'notifications.view' =>
+                        'View the notifications (content, customers, read or not)',
+
+                    'notifications.manage' =>
+                        'Create, edit, reschedule, cancel and send notifications',
+
+                    'notifications.settings' =>
+                        'Change the automatic notifications (on/off, texts, timing)',
                 ],
             ],
 

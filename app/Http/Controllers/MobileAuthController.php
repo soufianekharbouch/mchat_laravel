@@ -13,6 +13,8 @@ use App\Support\SubscriptionCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Throwable;
@@ -32,6 +34,11 @@ use Throwable;
  *
  * The password columns are kept (random password for new accounts),
  * /login with password stays available but is not used by the app.
+ *
+ * APPLE / GOOGLE REVIEW ACCOUNT (config services.app_review, .env):
+ * one phone number signs in with a fixed code, without WhatsApp, so the
+ * store reviewers can test the app. Only this number, only when
+ * APP_REVIEW_ENABLED=true, max 10 wrong codes per hour.
  */
 class MobileAuthController extends Controller
 {
@@ -55,6 +62,24 @@ class MobileAuthController extends Controller
                 $lang === 'ar' ? 'يرجى إدخال رقم هاتف صحيح.' : 'Please enter a valid phone number.',
                 422
             );
+        }
+
+        // Store review account: no WhatsApp message, fixed code
+        if ($this->isReviewPhone($phone)) {
+            $status = $this->accountStatus($phone);
+
+            Log::info('App review account: code requested', ['ip' => $request->ip()]);
+
+            return response()->json([
+                'success' => true,
+                'message' => $lang === 'ar'
+                    ? 'تم إرسال رمز التحقق إلى واتساب.'
+                    : 'A verification code has been sent to your WhatsApp.',
+                'account_status' => $status,
+                'requires_name' => $status === 'new',
+                'expires_at' => now()->addMinutes(30)->toIso8601String(),
+                'resend_in' => 30,
+            ]);
         }
 
         if (!OtpService::enabled()) {
@@ -119,7 +144,9 @@ class MobileAuthController extends Controller
             );
         }
 
-        if (!OtpService::enabled()) {
+        $isReview = $this->isReviewPhone($phone);
+
+        if (!$isReview && !OtpService::enabled()) {
             return $this->error(
                 $lang === 'ar' ? 'تسجيل الدخول غير متاح حالياً.' : 'Sign in is not available right now.',
                 503
@@ -139,7 +166,11 @@ class MobileAuthController extends Controller
         }
 
         try {
-            $this->otp->verify($phone, OtpService::PURPOSE_LOGIN, $request->input('code'), $lang);
+            if ($isReview) {
+                $this->verifyReviewCode((string) $request->input('code'), $lang);
+            } else {
+                $this->otp->verify($phone, OtpService::PURPOSE_LOGIN, $request->input('code'), $lang);
+            }
         } catch (OtpException $exception) {
             return response()->json(array_merge([
                 'success' => false,
@@ -160,7 +191,7 @@ class MobileAuthController extends Controller
 
             $token = CustomerSession::issue($customer);
 
-            $this->recordActivity($customer, $isNew ? 'app_signup' : 'app_login', ['method' => 'whatsapp_otp']);
+            $this->recordActivity($customer, $isNew ? 'app_signup' : 'app_login', ['method' => $isReview ? 'app_review_code' : 'whatsapp_otp']);
 
             $subscription = $customer->subscription;
 
@@ -290,6 +321,55 @@ class MobileAuthController extends Controller
         $parts = explode(' ', $fullName, 2);
 
         return [$parts[0], $parts[1] ?? ''];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | APPLE / GOOGLE REVIEW ACCOUNT
+    |--------------------------------------------------------------------------
+    */
+
+    /** Phone of the store review account (compared on the 8 local digits). */
+    private function isReviewPhone(string $phone): bool
+    {
+        if (!config('services.app_review.enabled')) {
+            return false;
+        }
+
+        $reviewPhone = $this->normalizePhone(config('services.app_review.phone'));
+        $code = (string) config('services.app_review.code');
+
+        if (strlen($reviewPhone) < 8 || strlen($code) < 4 || strlen($phone) < 8) {
+            return false;
+        }
+
+        return substr($phone, -8) === substr($reviewPhone, -8);
+    }
+
+    /** Fixed code of the review account (max 10 wrong codes per hour). */
+    private function verifyReviewCode(string $code, string $lang): void
+    {
+        $key = 'app-review-code';
+
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            throw new OtpException(
+                'too_many_attempts',
+                $lang === 'ar' ? 'محاولات كثيرة. حاول لاحقاً.' : 'Too many attempts. Please try again later.',
+                429
+            );
+        }
+
+        if (!hash_equals((string) config('services.app_review.code'), trim($code))) {
+            RateLimiter::hit($key, 3600);
+
+            throw new OtpException(
+                'invalid_code',
+                $lang === 'ar' ? 'الرمز غير صحيح.' : 'The code is not correct.',
+                422
+            );
+        }
+
+        RateLimiter::clear($key);
     }
 
     /*

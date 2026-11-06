@@ -3,6 +3,11 @@
 @section('title', 'Purchase ' . $purchase->reference)
 
 @section('content')
+@if(!empty($wasNew))
+    <div class="alert alert-info py-2">
+        <i class="fas fa-mobile-alt me-1"></i>New purchase from the mobile app{{ $purchase->paid_at ? ', paid ' . $purchase->paid_at->format('d/m/Y H:i') : '' }}. It is now marked as seen.
+    </div>
+@endif
 @php
     $authenticatedUser = auth()->user();
     $canUpdatePurchase = $authenticatedUser && $authenticatedUser->hasPermission('purchases.update');
@@ -283,6 +288,49 @@
                 @endif
             </div>
         </div>
+
+        {{-- ONLINE PAYMENT (Hesabe): every attempt of this pack --}}
+        @if(($onlinePayments ?? collect())->isNotEmpty())
+            @php
+                $paymentColors = ['paid' => 'success', 'initiated' => 'warning', 'failed' => 'danger', 'expired' => 'secondary'];
+                $paymentLabels = ['paid' => 'Paid', 'initiated' => 'Waiting', 'failed' => 'Refused / cancelled', 'expired' => 'Expired'];
+            @endphp
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-yellow py-2 d-flex justify-content-between align-items-center">
+                    <strong><i class="fas fa-credit-card me-1"></i>Online payment (Hesabe)</strong>
+                    <span class="badge bg-light text-dark">{{ $onlinePayments->count() }} attempt(s)</span>
+                </div>
+                <div class="list-group list-group-flush small">
+                    @foreach($onlinePayments as $payment)
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-semibold">{{ $payment->order_reference }}</span>
+                                <span class="badge bg-{{ $paymentColors[$payment->status] ?? 'secondary' }}">{{ $paymentLabels[$payment->status] ?? $payment->status }}</span>
+                            </div>
+                            <div class="text-muted">
+                                {{ $payment->created_at?->format('d/m/Y H:i') }}
+                                · {{ number_format((float) $payment->amount, 3) }} {{ $payment->currency }}
+                                @if(count($payment->purchase_ids ?? []) > 1)
+                                    · {{ count($payment->purchase_ids) }} packs
+                                @endif
+                            </div>
+                            @if($payment->payment_id || $payment->payment_token)
+                                <div>Payment id: <span class="font-monospace">{{ $payment->payment_id ?: $payment->payment_token }}</span></div>
+                            @endif
+                            @if($payment->result_code)
+                                <div>Result: {{ $payment->result_code }}</div>
+                            @endif
+                            @if($payment->paid_at)
+                                <div class="text-success">Paid {{ $payment->paid_at->format('d/m/Y H:i') }}</div>
+                            @endif
+                            @if($payment->failure_reason)
+                                <div class="{{ str_contains($payment->failure_reason, 'REFUND') ? 'text-danger fw-semibold' : 'text-muted' }}">{{ $payment->failure_reason }}</div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         {{-- STATUS CHANGE --}}
         @if($canChangeStatus)

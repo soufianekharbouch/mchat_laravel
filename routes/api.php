@@ -3,6 +3,8 @@
 use App\Http\Controllers\CustomerAppActivityController;
 use App\Http\Controllers\CustomerAuthController;
 use App\Http\Controllers\CustomerDashboardController;
+use App\Http\Controllers\HesabePaymentController;
+use App\Http\Controllers\MobileAccountDeletionController;
 use App\Http\Controllers\MobileCustomerSettingsController;
 use App\Http\Controllers\MobileAuthController;
 use App\Http\Controllers\MobileDeviceController;
@@ -35,6 +37,31 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/shopify/webhooks/orders', [ShopifyWebhookController::class, 'orders'])
     ->middleware('throttle:120,1');
+
+/*
+|--------------------------------------------------------------------------
+| HESABE PAYMENT (no sign in)
+|--------------------------------------------------------------------------
+|
+| return / failure : the customer comes back from the Hesabe page
+| webhook          : Hesabe server -> our server (only a signal: the result
+|                    is always asked to Hesabe)
+|
+*/
+
+Route::match(['get', 'post'], '/payments/hesabe/return/{reference}', [HesabePaymentController::class, 'returned'])
+    ->where('reference', '[A-Za-z0-9\-]+')
+    ->middleware('throttle:60,1')
+    ->name('payments.hesabe.return');
+
+Route::match(['get', 'post'], '/payments/hesabe/failure/{reference}', [HesabePaymentController::class, 'failure'])
+    ->where('reference', '[A-Za-z0-9\-]+')
+    ->middleware('throttle:60,1')
+    ->name('payments.hesabe.failure');
+
+Route::post('/payments/hesabe/webhook', [HesabePaymentController::class, 'webhook'])
+    ->middleware('throttle:120,1')
+    ->name('payments.hesabe.webhook');
 
 /*
 |--------------------------------------------------------------------------
@@ -79,8 +106,8 @@ Route::prefix('mobile')->group(function () {
 
     Route::post('/app-version', function () {
 
-        $latestVersion = '1.0.37';
-        $minimumVersion = '1.0.37';
+        $latestVersion = '1.0.39';
+        $minimumVersion = '1.0.39';
         $forceUpdate = true;
         $playStoreUrl = 'https://play.google.com/store/apps/details?id=com.maisonchat.mchat';
 
@@ -142,6 +169,19 @@ Route::prefix('mobile')->group(function () {
         ->middleware('throttle:120,1');
 
     Route::post('/shop/checkout', [MobileShopController::class, 'checkout'])
+        ->middleware('throttle:20,1');
+
+    // The customer deletes his account himself (Apple / Google)
+    Route::post('/account/delete', [MobileAccountDeletionController::class, 'destroy'])
+        ->middleware('throttle:5,1');
+
+    // Online payment (Hesabe): result / pay again (packs still pending)
+    Route::post('/payments/{transaction}/status', [HesabePaymentController::class, 'status'])
+        ->whereNumber('transaction')
+        ->middleware('throttle:60,1');
+
+    Route::post('/payments/{transaction}/retry', [HesabePaymentController::class, 'retry'])
+        ->whereNumber('transaction')
         ->middleware('throttle:20,1');
 
     /*

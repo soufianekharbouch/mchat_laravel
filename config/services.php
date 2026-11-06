@@ -81,6 +81,53 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | ONLINE PAYMENT OF THE APP
+    |--------------------------------------------------------------------------
+    |
+    | PAYMENT_GATEWAY empty  -> SIMULATION (test card sheet, no real money)
+    | PAYMENT_GATEWAY=hesabe -> real payment (KNET / Visa / Mastercard)
+    |
+    */
+
+    'payment' => [
+        'gateway' => env('PAYMENT_GATEWAY'),
+
+        // Scheme of the app (app.json "scheme"): back to the app after paying
+        'app_scheme' => env('PAYMENT_APP_SCHEME', 'mchat'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | HESABE (Merchant panel > Profile > Account)
+    |--------------------------------------------------------------------------
+    |
+    | Test server : HESABE_ENVIRONMENT=sandbox    + the sandbox keys
+    | Production  : HESABE_ENVIRONMENT=production + the production keys
+    | The keys stay in .env only.
+    |
+    */
+
+    'hesabe' => [
+        'environment' => env('HESABE_ENVIRONMENT', 'sandbox'),
+
+        // Empty = https://sandbox.hesabe.com or https://api.hesabe.com
+        'gateway_url' => env('HESABE_GATEWAY_URL'),
+
+        'merchant_code' => env('HESABE_MERCHANT_CODE'),
+        'access_code' => env('HESABE_ACCESS_CODE'),
+        'secret_key' => env('HESABE_SECRET_KEY'),   // 32 characters
+        'iv_key' => env('HESABE_IV_KEY'),           // 16 characters
+
+        // 0 = Hesabe page (the customer chooses), 1 = KNET only, 2 = card (MPGS)
+        'payment_type_knet' => (int) env('HESABE_PAYMENT_TYPE_KNET', 0),
+        'payment_type_card' => (int) env('HESABE_PAYMENT_TYPE_CARD', 0),
+
+        // Our order reference at Hesabe: MCP000123-AB12 (MCT on the test server)
+        'reference_prefix' => env('HESABE_REFERENCE_PREFIX', 'MCP'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | ZOKO (WhatsApp OTP)
     |--------------------------------------------------------------------------
     */
@@ -138,7 +185,37 @@ return [
         'enabled' => env('ORDER_NOTIFICATIONS_ENABLED', true),
 
         // Deliveries before this day are never notified (empty = JAAK_START_DATE)
-        'sync_start' => env('SHOPIFY_SYNC_START', '2026-10-29')
+        'start_date' => env('ORDER_NOTIFICATIONS_START_DATE'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Apple / Google review account (store review of the mobile app)
+    |--------------------------------------------------------------------------
+    |
+    | This phone number signs in with this fixed code, without WhatsApp.
+    | Give them to Apple (App Review Information) and Google (App access).
+    | APP_REVIEW_ENABLED=false once the app is accepted, if you prefer.
+    |
+    */
+
+    'app_review' => [
+        'enabled' => env('APP_REVIEW_ENABLED', false),
+        'phone' => env('APP_REVIEW_PHONE'),
+        'code' => env('APP_REVIEW_CODE'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Shop contact: "Any question? WhatsApp" button of the product page
+    |--------------------------------------------------------------------------
+    |
+    | SHOP_WHATSAPP_NUMBER=96550000000 (international, digits only)
+    |
+    */
+
+    'shop_contact' => [
+        'whatsapp' => env('SHOP_WHATSAPP_NUMBER'),
     ],
 
 ];

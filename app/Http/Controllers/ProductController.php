@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MediaLibraryItem;
 use App\Models\Product;
+use App\Models\ProductMedia;
 use App\Models\Recipe;
 use App\Services\ShopifyCatalogService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Throwable;
@@ -36,7 +40,7 @@ class ProductController extends Controller
         ];
 
         $products = Product::query()
-            ->withCount('recipes')
+            ->withCount(['recipes', 'media'])
             ->when($filters['search'] !== '', function ($query) use ($filters) {
                 $search = '%' . $filters['search'] . '%';
 
@@ -91,6 +95,8 @@ class ProductController extends Controller
             'recipes' => $this->recipesForForm(),
             'selectedRecipes' => [],
             'shopifyCatalog' => $this->shopifyCatalog($request),
+            'mediaLibrary' => $this->mediaLibrary(),
+            'serverUploadLimitKb' => self::serverUploadLimitKb(),
         ]);
     }
 
@@ -103,10 +109,15 @@ class ProductController extends Controller
         DB::transaction(function () use ($request, $data, $recipeSync) {
             if ($request->hasFile('image')) {
                 $data['image'] = $request->file('image')->store('products', 'public');
+            } elseif ($libraryImage = $this->libraryImage($request)) {
+                $data['image'] = $libraryImage;
             }
 
             $product = Product::create($data);
             $product->recipes()->sync($recipeSync);
+
+            // Gallery: images + videos
+            $this->saveMedia($request, $product);
         });
 
         return redirect()
@@ -124,7 +135,7 @@ class ProductController extends Controller
     {
         $this->authorizePermission('products.update');
 
-        $product->load('recipes');
+        $product->load(['recipes', 'media']);
 
         $selectedRecipes = $product->recipes
             ->mapWithKeys(fn ($recipe) => [
@@ -141,6 +152,8 @@ class ProductController extends Controller
             'recipes' => $this->recipesForForm(),
             'selectedRecipes' => $selectedRecipes,
             'shopifyCatalog' => $this->shopifyCatalog($request),
+            'mediaLibrary' => $this->mediaLibrary($product),
+            'serverUploadLimitKb' => self::serverUploadLimitKb(),
         ]);
     }
 
@@ -159,14 +172,19 @@ class ProductController extends Controller
 
             if ($request->hasFile('image')) {
                 $data['image'] = $request->file('image')->store('products', 'public');
+            } elseif ($libraryImage = $this->libraryImage($request)) {
+                $data['image'] = $libraryImage;
             }
 
             $product->update($data);
             $product->recipes()->sync($recipeSync);
 
+            // Gallery: removed / order / new images and videos
+            $this->saveMedia($request, $product);
+
             // Old file removed only once the new state is saved
             if ($oldImage && $oldImage !== $product->image) {
-                Storage::disk('public')->delete($oldImage);
+                $this->deleteFileIfUnused($oldImage);
             }
         });
 
@@ -191,6 +209,357 @@ class ProductController extends Controller
             'success',
             $product->is_active ? 'Product activated.' : 'Product deactivated.'
         );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DUPLICATE
+    |--------------------------------------------------------------------------
+    |
+    | Copy of the SAVED product: same rules, prices, recipes, images and
+    | videos (same files, nothing copied on the server). The copy is INACTIVE (checked before showing it in the app),
+    | its code ends with -COPY, it is not linked to Shopify.
+    |
+    */
+
+    public function duplicate(Product $product): RedirectResponse
+    {
+        $this->authorizePermission('products.create');
+
+        $product->load(['recipes', 'media']);
+
+        $copy = DB::transaction(function () use ($product) {
+            $copy = $product->replicate(['image', 'shopify_product_id', 'shopify_variant_id']);
+
+            $copy->code = $this->copyCode($product->code);
+            $copy->name = Str::limit($product->name . ' (copy)', 191, '');
+            $copy->name_ar = filled($product->name_ar) ? Str::limit($product->name_ar . ' (نسخة)', 191, '') : null;
+            $copy->is_active = false;
+            $copy->shopify_product_id = null;
+            $copy->shopify_variant_id = null;
+            // Same files as the original (no copy): a file is deleted only
+            // when no product uses it any more
+            $copy->image = $product->image;
+            $copy->save();
+
+            // Recipes with their limits
+            $copy->recipes()->sync(
+                $product->recipes->mapWithKeys(fn ($recipe) => [
+                    $recipe->id => [
+                        'max_quantity' => $recipe->pivot->max_quantity,
+                        'is_default' => (bool) $recipe->pivot->is_default,
+                        'sort_order' => (int) $recipe->pivot->sort_order,
+                    ],
+                ])->all()
+            );
+
+            // Images and videos: the same files
+            foreach ($product->media as $item) {
+                $copy->media()->create([
+                    'type' => $item->type,
+                    'path' => $item->path,
+                    'mime' => $item->mime,
+                    'size' => $item->size,
+                    'sort_order' => $item->sort_order,
+                ]);
+            }
+
+            return $copy;
+        });
+
+        return redirect()
+            ->route('products.edit', $copy)
+            ->with('success', "Product duplicated: \"{$copy->code}\" (inactive). Check it, then activate it.");
+    }
+
+    /** CAT-REG-1M -> CAT-REG-1M-COPY, then -COPY2, -COPY3... (max 50 characters) */
+    private function copyCode(string $code): string
+    {
+        $base = Str::limit(strtoupper($code), 40, '') . '-COPY';
+        $candidate = $base;
+        $number = 2;
+
+        while (Product::withTrashed()->where('code', $candidate)->exists()) {
+            $candidate = $base . $number++;
+        }
+
+        return $candidate;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | LIBRARY UPLOAD (popup of the product form, one file at a time)
+    |--------------------------------------------------------------------------
+    |
+    | POST /products-media/upload   { file }  -> JSON item of the library
+    | The file is then chosen like any other file of the library.
+    |
+    */
+
+    public function uploadMedia(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+        abort_unless($user && ($user->hasPermission('products.create') || $user->hasPermission('products.update')), 403);
+
+        $validator = Validator::make($request->all(), [
+            'file' => [
+                'required',
+                'file',
+                'mimes:' . implode(',', array_merge(ProductMedia::IMAGE_EXTENSIONS, ProductMedia::VIDEO_EXTENSIONS)),
+                'max:' . ProductMedia::MAX_VIDEO_KB,
+            ],
+        ], [
+            'file.mimes' => 'Images JPG, PNG, WebP or videos MP4, MOV, WebM only.',
+            'file.max' => 'File too big (videos max 50 MB).',
+            'file.uploaded' => 'The file could not be uploaded (too big for the server?).',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $file = $request->file('file');
+        $isVideo = $this->isVideo($file);
+
+        if (!$isVideo && $file->getSize() > ProductMedia::MAX_IMAGE_KB * 1024) {
+            return response()->json(['success' => false, 'message' => 'Image too big (max 4 MB).'], 422);
+        }
+
+        $item = MediaLibraryItem::create([
+            'type' => $isVideo ? ProductMedia::TYPE_VIDEO : ProductMedia::TYPE_IMAGE,
+            'path' => $file->store('products/media', 'public'),
+            'original_name' => Str::limit($file->getClientOriginalName(), 250, ''),
+            'mime' => $file->getMimeType(),
+            'size' => $file->getSize(),
+            'uploaded_by' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'item' => [
+                'path' => $item->path,
+                'url' => $item->url,
+                'type' => $item->type,
+                'mime' => $item->mime,
+                'size' => $item->size,
+                'name' => $item->original_name,
+                'products' => '',
+            ],
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GALLERY (images + videos)
+    |--------------------------------------------------------------------------
+    |
+    | media_files[]   new files (images / videos), added at the end
+    | media_remove[]  ids to remove
+    | media_order     "12,5,9": order of the kept items
+    |
+    */
+
+    private function saveMedia(Request $request, Product $product): void
+    {
+        $removeIds = collect($request->input('media_remove', []))->map(fn ($id) => (int) $id)->filter()->all();
+
+        if ($removeIds) {
+            $product->media()->whereIn('id', $removeIds)->get()->each(function (ProductMedia $item) {
+                $item->delete();
+                // The same file may be used by other products (library)
+                $this->deleteFileIfUnused($item->path);
+            });
+        }
+
+        // Order chosen in the form
+        $order = array_values(array_filter(array_map('intval', explode(',', (string) $request->input('media_order', '')))));
+
+        foreach ($order as $position => $id) {
+            $product->media()->whereKey($id)->update(['sort_order' => $position]);
+        }
+
+        $next = (int) $product->media()->max('sort_order') + 1;
+
+        /*
+         * Chosen in the library: the SAME file is used (nothing uploaded
+         * again, nothing copied). Only files of the library are accepted.
+         */
+        $library = collect($this->mediaLibrary())->keyBy('path');
+        $alreadyHere = $product->media()->pluck('path')->all();
+
+        foreach (array_unique((array) $request->input('media_existing', [])) as $path) {
+            $entry = $library->get((string) $path);
+
+            if (!$entry || in_array($entry['path'], $alreadyHere, true)) {
+                continue;
+            }
+
+            $product->media()->create([
+                'type' => $entry['type'],
+                'path' => $entry['path'],
+                'mime' => $entry['mime'],
+                'size' => $entry['size'],
+                'sort_order' => $next++,
+            ]);
+
+            $alreadyHere[] = $entry['path'];
+        }
+
+        foreach ((array) $request->file('media_files', []) as $file) {
+            if (!$file || !$file->isValid()) {
+                continue;
+            }
+
+            $isVideo = $this->isVideo($file);
+
+            $product->media()->create([
+                'type' => $isVideo ? ProductMedia::TYPE_VIDEO : ProductMedia::TYPE_IMAGE,
+                'path' => $file->store('products/media', 'public'),
+                'mime' => $file->getMimeType(),
+                'size' => $file->getSize(),
+                'sort_order' => $next++,
+            ]);
+        }
+    }
+
+    /**
+     * Every image / video already on the server: main images of the
+     * products + their galleries (one entry per file).
+     *
+     * @return array<int, array{path: string, url: string, type: string, mime: ?string, size: ?int, products: string}>
+     */
+    private function mediaLibrary(?Product $except = null): array
+    {
+        $files = [];
+
+        $add = function (string $path, string $type, ?string $mime, ?int $size, ?string $productLabel, ?string $name = null) use (&$files) {
+            if (!isset($files[$path])) {
+                $files[$path] = [
+                    'path' => $path,
+                    'url' => asset('storage/app/public/' . $path),
+                    'type' => $type,
+                    'mime' => $mime,
+                    'size' => $size,
+                    'name' => $name,
+                    'products' => [],
+                ];
+            }
+
+            if ($productLabel) {
+                $files[$path]['products'][$productLabel] = true;
+            }
+        };
+
+        // Files uploaded in the library (newest first), used or not
+        try {
+            MediaLibraryItem::query()
+                ->orderByDesc('id')
+                ->get()
+                ->each(fn (MediaLibraryItem $item) => $add($item->path, $item->type, $item->mime, $item->size, null, $item->original_name));
+        } catch (Throwable) {
+            // table not created yet
+        }
+
+        Product::withTrashed()
+            ->whereNotNull('image')
+            ->where('image', '!=', '')
+            ->get(['id', 'code', 'image'])
+            ->each(fn (Product $item) => $add($item->image, ProductMedia::TYPE_IMAGE, null, null, $item->code . ' (main)'));
+
+        // Galleries of ALL the products (images + videos)
+        $codes = Product::withTrashed()->pluck('code', 'id');
+
+        ProductMedia::query()
+            ->orderByDesc('id')
+            ->get()
+            ->each(fn (ProductMedia $item) => $add(
+                $item->path,
+                $item->type,
+                $item->mime,
+                $item->size,
+                ($codes[$item->product_id] ?? '#' . $item->product_id) . ' (gallery)'
+            ));
+
+        // Already in THIS product's gallery: flagged (hidden only when adding to the gallery)
+        $own = $except ? $except->media()->pluck('path')->all() : [];
+
+        return collect($files)
+            ->map(fn ($file) => array_merge($file, [
+                'products' => implode(', ', array_keys($file['products'])),
+                'own' => in_array($file['path'], $own, true),
+            ]))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Biggest file PHP accepts on this server (KB): the smallest of
+     * upload_max_filesize and post_max_size (cPanel > Select PHP Version).
+     */
+    public static function serverUploadLimitKb(): int
+    {
+        $toKb = function ($value): int {
+            $value = trim((string) $value);
+
+            if ($value === '' || $value === '0' || $value === '-1') {
+                return PHP_INT_MAX;
+            }
+
+            $number = (float) $value;
+
+            return (int) match (strtolower(substr($value, -1))) {
+                'g' => $number * 1024 * 1024,
+                'm' => $number * 1024,
+                'k' => $number,
+                default => $number / 1024,
+            };
+        };
+
+        return min($toKb(ini_get('upload_max_filesize')), $toKb(ini_get('post_max_size')));
+    }
+
+    /** Main image chosen in the library (images of the library only). */
+    private function libraryImage(Request $request): ?string
+    {
+        $path = (string) $request->input('image_existing', '');
+
+        if ($path === '') {
+            return null;
+        }
+
+        $entry = collect($this->mediaLibrary())->firstWhere('path', $path);
+
+        return $entry && $entry['type'] === ProductMedia::TYPE_IMAGE ? $entry['path'] : null;
+    }
+
+    /** A file is deleted only when no product uses it any more. */
+    private function deleteFileIfUnused(?string $path): void
+    {
+        if (!$path) {
+            return;
+        }
+
+        $used = ProductMedia::where('path', $path)->exists()
+            || Product::withTrashed()->where('image', $path)->exists();
+
+        // Files of the library stay (usable later by other products)
+        try {
+            $used = $used || MediaLibraryItem::where('path', $path)->exists();
+        } catch (Throwable) {
+            // table not created yet
+        }
+
+        if (!$used) {
+            Storage::disk('public')->delete($path);
+        }
+    }
+
+    private function isVideo($file): bool
+    {
+        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension());
+
+        return in_array($extension, ProductMedia::VIDEO_EXTENSIONS, true)
+            || str_starts_with((string) $file->getMimeType(), 'video/');
     }
 
     /*
@@ -228,10 +597,26 @@ class ProductController extends Controller
             ],
             'name' => ['required', 'string', 'max:191'],
             'name_ar' => ['nullable', 'string', 'max:191'],
+            'subtitle' => ['nullable', 'string', 'max:191'],
+            'subtitle_ar' => ['nullable', 'string', 'max:191'],
             'description' => ['nullable', 'string', 'max:5000'],
             'description_ar' => ['nullable', 'string', 'max:5000'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'remove_image' => ['nullable', 'boolean'],
+            'image_existing' => ['nullable', 'string', 'max:255'],
+
+            // Gallery (images + videos)
+            'media_files' => ['nullable', 'array'],
+            'media_files.*' => [
+                'file',
+                'mimes:' . implode(',', array_merge(ProductMedia::IMAGE_EXTENSIONS, ProductMedia::VIDEO_EXTENSIONS)),
+                'max:' . ProductMedia::MAX_VIDEO_KB,
+            ],
+            'media_existing' => ['nullable', 'array', 'max:' . ProductMedia::MAX_PER_PRODUCT],
+            'media_existing.*' => ['string', 'max:255'],
+            'media_remove' => ['nullable', 'array'],
+            'media_remove.*' => ['integer'],
+            'media_order' => ['nullable', 'string', 'max:2000'],
 
             'species' => ['required', Rule::in(Product::SPECIES)],
             'product_type' => ['required', Rule::in(Product::TYPES)],
@@ -251,6 +636,18 @@ class ProductController extends Controller
             'duration_unit' => ['required', Rule::in(Product::DURATION_UNITS)],
 
             'total_recipes' => ['required', 'integer', 'min:1', 'max:10000'],
+
+            // Product page of the app
+            'bags_count' => ['nullable', 'integer', 'min:1', 'max:1000'],
+            'bag_weight_grams' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'free_delivery' => ['nullable', 'boolean'],
+            'features' => ['nullable', 'array'],
+            'features.*' => [Rule::in(array_keys(Product::FEATURES))],
+            'contents' => ['nullable', 'array', 'max:' . Product::MAX_CONTENTS],
+            'contents.*.label' => ['nullable', 'string', 'max:100'],
+            'contents.*.label_ar' => ['nullable', 'string', 'max:100'],
+            'contents.*.quantity' => ['nullable', 'integer', 'min:1', 'max:1000'],
+            'contents.*.image' => ['nullable', 'string', 'max:255'],
 
             'min_deliveries' => ['required', 'integer', 'min:1', 'max:1000'],
             'max_deliveries' => ['required', 'integer', 'min:1', 'max:1000', 'gte:min_deliveries'],
@@ -277,6 +674,9 @@ class ProductController extends Controller
             'max_deliveries.gte' => 'Max deliveries must be greater than or equal to min deliveries.',
             'max_recipes_per_delivery.gte' => 'Max recipes per delivery must be greater than or equal to the minimum.',
             'code.regex' => 'The code may only contain letters, numbers, - and _.',
+            'media_files.*.mimes' => 'Gallery: images JPG, PNG, WebP or videos MP4, MOV, WebM only.',
+            'media_files.*.max' => 'Gallery: a file is too big (videos max 50 MB).',
+            'media_files.*.uploaded' => 'Gallery: a file could not be uploaded (too big for the server?).',
         ]);
 
         /*
@@ -291,9 +691,34 @@ class ProductController extends Controller
             ])
             ->values();
 
-        $validator->after(function ($validator) use ($request, $selected) {
+        $validator->after(function ($validator) use ($request, $selected, $product) {
             if ($validator->errors()->isNotEmpty()) {
                 return;
+            }
+
+            /*
+             * Gallery: images max 4 MB, 10 items per product.
+             */
+            $newFiles = array_filter((array) $request->file('media_files', []));
+
+            foreach ($newFiles as $file) {
+                if (!$this->isVideo($file) && $file->getSize() > ProductMedia::MAX_IMAGE_KB * 1024) {
+                    $validator->errors()->add('media_files', "Gallery: the image \"{$file->getClientOriginalName()}\" is bigger than 4 MB.");
+                }
+            }
+
+            $kept = $product
+                ? $product->media()->whereNotIn('id', array_map('intval', (array) $request->input('media_remove', [])) ?: [0])->count()
+                : 0;
+
+            $fromLibrary = count(array_unique((array) $request->input('media_existing', [])));
+
+            if ($kept + count($newFiles) + $fromLibrary > ProductMedia::MAX_PER_PRODUCT) {
+                $validator->errors()->add(
+                    'media_files',
+                    'Gallery: maximum ' . ProductMedia::MAX_PER_PRODUCT . ' images / videos per product ('
+                    . ($kept + count($newFiles) + $fromLibrary) . ' selected).'
+                );
             }
 
             $total = (int) $request->total_recipes;
@@ -427,10 +852,26 @@ class ProductController extends Controller
         $validated = $validator->validate();
 
         $data = collect($validated)
-            ->except(['image', 'remove_image', 'recipes'])
+            ->except(['image', 'image_existing', 'remove_image', 'recipes', 'media_files', 'media_existing', 'media_remove', 'media_order'])
             ->all();
 
         $data['is_trial'] = $request->boolean('is_trial');
+        $data['free_delivery'] = $request->boolean('free_delivery');
+        $data['features'] = (array) ($validated['features'] ?? []);
+
+        // "What's inside": filled lines only, images of the library only
+        $libraryPaths = collect($this->mediaLibrary())->where('type', ProductMedia::TYPE_IMAGE)->pluck('path')->all();
+
+        $data['contents'] = collect($validated['contents'] ?? [])
+            ->filter(fn ($row) => filled($row['label'] ?? null) || filled($row['label_ar'] ?? null))
+            ->map(fn ($row) => [
+                'label' => trim((string) ($row['label'] ?? '')),
+                'label_ar' => trim((string) ($row['label_ar'] ?? '')),
+                'quantity' => filled($row['quantity'] ?? null) ? (int) $row['quantity'] : null,
+                'image' => in_array($row['image'] ?? null, $libraryPaths, true) ? $row['image'] : null,
+            ])
+            ->values()
+            ->all() ?: null;
         $data['is_active'] = $request->boolean('is_active');
         $data['sort_order'] = (int) ($validated['sort_order'] ?? 0);
         $data['currency'] = strtoupper($validated['currency']);

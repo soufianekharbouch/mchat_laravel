@@ -120,7 +120,7 @@
                         <th class="text-center">Deliveries</th>
                         <th class="text-center">Per delivery</th>
                         <th class="text-center">Status</th>
-                        @if($canUpdateProduct || $canDeleteProduct)
+                        @if($canUpdateProduct || $canDeleteProduct || $canCreateProduct)
                             <th class="text-end">Actions</th>
                         @endif
                     </tr>
@@ -143,7 +143,12 @@
                                 @if($product->name_ar)
                                     <div class="small text-muted" dir="rtl">{{ $product->name_ar }}</div>
                                 @endif
-                                <div class="small text-muted">{{ $product->code }}</div>
+                                <div class="small text-muted">
+                                    {{ $product->code }}
+                                    @if($product->media_count)
+                                        · <i class="fas fa-photo-video"></i> {{ $product->media_count }}
+                                    @endif
+                                </div>
                             </td>
 
                             <td>
@@ -230,13 +235,23 @@
                                 @endif
                             </td>
 
-                            @if($canUpdateProduct || $canDeleteProduct)
+                            @if($canUpdateProduct || $canDeleteProduct || $canCreateProduct)
                                 <td class="text-end text-nowrap">
                                     @if($canUpdateProduct)
                                         <a href="{{ route('products.edit', $product) }}"
                                            class="btn btn-sm btn-outline-primary" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                    @endif
+
+                                    @if($canCreateProduct)
+                                        <form method="POST" action="{{ route('products.duplicate', $product) }}" class="d-inline"
+                                              onsubmit="return confirm('Duplicate {{ e($product->code) }}? The copy is inactive and its code ends with -COPY.');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-outline-dark" title="Duplicate">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </form>
                                     @endif
 
                                     @if($canDeleteProduct)

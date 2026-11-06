@@ -68,3 +68,20 @@ Schedule::command('shopify:sync-orders')
     ->withoutOverlapping()
     ->when(fn () => filled(config('services.shopify.store_domain'))
         && filled(config('services.shopify.admin_access_token')));
+
+/*
+|--------------------------------------------------------------------------
+| Online payments (Hesabe) not confirmed yet
+|--------------------------------------------------------------------------
+|
+| Customer closed the app on the payment page, webhook not received...:
+| every 5 minutes the open payments are asked to Hesabe (paid -> packs
+| paid), and the ones not paid after 2 hours are closed.
+|
+*/
+
+Schedule::command('payments:check-pending')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->when(fn () => \App\Services\OnlinePaymentService::enabled()
+        && \App\Models\PaymentTransaction::query()->where('status', 'initiated')->exists());
